@@ -98,45 +98,60 @@ function writeMetadata(step, pipeline, varargin)
     
     
     % Write the input dictionary to metaData
-    metaData{line} = strcat(['{''inputs'':{', inputEntries{1}, ', \r\n']); line = line + 1; %opening bracket of the input dictionary
-    if length(inputEntries) > 2
+    metaData{line} = strcat(['{''inputs'':{', inputEntries{1}]);  %opening bracket of the input dictionary
+    if length(inputEntries) == 1
+        metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
+    else
+        metaData{line} = strcat([metaData{line}, ', \r\n']);
+        line = line + 1;
         for m = 2:length(inputEntries)-1
             metaData{line} = strcat(['           ', inputEntries{m}, ', \r\n']); line = line + 1;
         end
+        metaData{line} = strcat(['           ', inputEntries{length(inputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of the input dictionary
     end
-    metaData{line} = strcat(['           ', inputEntries{length(inputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of the input dictionary
     
     
     % Write the output dictionary to metaData
-    metaData{line} = strcat([' ''outputs'':{', outputEntries{1}, ', \r\n']); line = line + 1; %opening bracket of the output dictionary
-    if length(outputEntries) > 2
+    metaData{line} = strcat([' ''outputs'':{', outputEntries{1}]); %opening bracket of the output dictionary
+    if length(outputEntries) == 1
+        metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
+    else
+        metaData{line} = strcat([metaData{line}, ', \r\n']);
+        line = line + 1;
         for n = 2:length(outputEntries)-1
             metaData{line} = strcat(['            ', outputEntries{n}, ', \r\n']); line = line + 1;
-        end
+        end    
+        metaData{line} = strcat(['            ', outputEntries{length(outputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of output dictionary
     end
-    metaData{line} = strcat(['            ', outputEntries{length(outputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of output dictionary
-    
-    
-    metaData{line} = strcat([' ''pipeline'':''', pipeline, ''', \r\n']); line = line + 1;
-    
-    
-    % Write the parameters dictionary to metaData
-    metaData{line} = strcat([' ''parameters'':{', paramEntries{1}, ', \r\n']); line = line + 1; %opening bracket of parameters dictionary
-    if length(paramEntries) > 2
-        for n = 2:length(paramEntries)-1
-            metaData{line} = strcat(['               ', paramEntries{n}, ', \r\n']); line = line + 1;
-        end
-    end
-    metaData{line} = strcat(['               ', paramEntries{length(paramEntries)}, '}, \r\n']); line = line + 1; %closing bracket of parameters dictionary
     
     %Write the calling function's dependencies to metaData
-    metaData{line} = strcat([' ''dependencies'':[''', calledFunctions{1}, ''', \r\n']); line = line + 1;
-    if length(calledFunctions) > 2
+    metaData{line} = strcat([' ''dependencies'':[''', calledFunctions{1}, '''']); 
+    if length(calledFunctions) == 1
+        metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
+    else
+        metaData{line} = strcat([metaData{line}, ', \r\n']);
+        line = line + 1;
         for q = 2:length(calledFunctions)-1
             metaData{line} = strcat(['                 ''', calledFunctions{q}, ''', \r\n']); line = line + 1;
         end
+        metaData{line} = strcat(['                 ''', calledFunctions{length(calledFunctions)}, '''] \r\n']); line = line + 1;
     end
-    metaData{line} = strcat(['                 ''', calledFunctions{length(calledFunctions)}, '''] \r\n']); line = line + 1;
+    
+    metaData{line} = strcat([' ''pipeline'':''', pipeline, ''', \r\n']); line = line + 1;
+    
+    % Write the parameters dictionary to metaData
+    metaData{line} = strcat([' ''parameters'':{', paramEntries{1}]); %opening bracket of parameters dictionary
+    if length(paramEntries) == 1
+        metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
+    else
+        metaData{line} = strcat([metaData{line}, ', \r\n']);
+        line = line + 1;
+        for n = 2:length(paramEntries)-1
+            metaData{line} = strcat(['               ', paramEntries{n}, ', \r\n']); line = line + 1;
+        end
+        metaData{line} = strcat(['               ', paramEntries{length(paramEntries)}, '}, \r\n']); line = line + 1; %closing bracket of parameters dictionary
+    end
+    
     metaData{line} = '} \r\n';
     
     %% Save as output
