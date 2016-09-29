@@ -25,14 +25,19 @@ function writeMetadata(step, pipeline, varargin)
     
     numLines = length(inputs)+length(outputs)+length(parameters)+2;
     
+    %% Reformat all cells of the form {'key', 'value'} as strings of the form " 'key':'value' " 
     
-    % For each input, make individual dictionary entries, i.e., strings of
+    % Make individual dictionary entries for each input, i.e., strings of
     % the form 
     
     % " 'key1':'value1' "
     
     inputEntries = cell(1, length(inputs));
     for i = 1:length(inputs)
+        if isempty((strfind(inputs{i}{2}, '\')))
+            splitted = strsplit(inputs{i}{2}, '\');
+            inputs{i}{2} = strjoin(splitted, '\\\\');
+        end
         inputEntries{i} = strcat(['''', inputs{i}{1},''':''', inputs{i}{2},'''']);
     end 
     
@@ -40,6 +45,10 @@ function writeMetadata(step, pipeline, varargin)
     % Make indiviual dictionary entries for each output:
     outputEntries = cell(1, length(inputs));
     for j = 1:length(outputs)
+        if ~isempty(strfind(outputs{i}{2}, '\'))
+            splitted = strsplit(outputs{i}{2}, '\');
+            outputs{i}{2} = strjoin(splitted, '\\\\');
+        end
         outputEntries{j} = strcat(['''', outputs{j}{1},''':''', outputs{j}{2},'''']);
     end 
     
@@ -54,6 +63,32 @@ function writeMetadata(step, pipeline, varargin)
         end
     end
     
+    
+    
+    %% Get the dependencies of the calling function, and, where possible, their versions
+    
+    ST = dbstack(1, '-completenames');
+    [fList, pList] = matlab.codetools.requiredFilesAndProducts(ST.file);
+    fListMax = 50;
+    fList = fList(1:fListMax); % we can truncate this list; in practice, it tends to turn out to be several hundred
+    
+    calledFunctions = cell(1, length(fListMax));
+    for i = 1:length(fList)
+        [fullPath, commit] = getVersion(fList{i});
+        if ~isempty((strfind(fullPath, '\')))
+            splitted = strsplit(fullPath, '\');
+            fullPath = strjoin(splitted, '\\\\');
+        end
+        calledFunctions{i} = strcat([fullPath, ' ' commit]);
+    end
+
+    disp(strcat(['length(calledFunctions) = ', num2str(length(calledFunctions)) ]));
+    
+    %% Write all " 'key':'value' " pairs into a dictionary with the format:
+    
+    %
+    %
+    %
     
     % Create the metaData cell array; each entry in this array will be a
     % line of the metadata file
@@ -72,7 +107,7 @@ function writeMetadata(step, pipeline, varargin)
     metaData{line} = strcat(['           ', inputEntries{length(inputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of the input dictionary
     
     
-    %Write the output dictionary to metaData
+    % Write the output dictionary to metaData
     metaData{line} = strcat([' ''outputs'':{', outputEntries{1}, ', \r\n']); line = line + 1; %opening bracket of the output dictionary
     if length(outputEntries) > 2
         for n = 2:length(outputEntries)-1
@@ -82,10 +117,10 @@ function writeMetadata(step, pipeline, varargin)
     metaData{line} = strcat(['            ', outputEntries{length(outputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of output dictionary
     
     
-    metaData{line} = strcat([' ''pipeline'':', pipeline, ', \r\n']); line = line + 1;
+    metaData{line} = strcat([' ''pipeline'':''', pipeline, ''', \r\n']); line = line + 1;
     
     
-    %Write the parameters dictionary to metaData
+    % Write the parameters dictionary to metaData
     metaData{line} = strcat([' ''parameters'':{', paramEntries{1}, ', \r\n']); line = line + 1; %opening bracket of parameters dictionary
     if length(paramEntries) > 2
         for n = 2:length(paramEntries)-1
@@ -93,11 +128,23 @@ function writeMetadata(step, pipeline, varargin)
         end
     end
     metaData{line} = strcat(['               ', paramEntries{length(paramEntries)}, '}, \r\n']); line = line + 1; %closing bracket of parameters dictionary
+    
+    %Write the calling function's dependencies to metaData
+    metaData{line} = strcat([' ''dependencies'':[''', calledFunctions{1}, ''', \r\n']); line = line + 1;
+    if length(calledFunctions) > 2
+        for q = 2:length(calledFunctions)-1
+            metaData{line} = strcat(['                 ''', calledFunctions{q}, ''', \r\n']); line = line + 1;
+        end
+    end
+    metaData{line} = strcat(['                 ''', calledFunctions{length(calledFunctions)}, '''] \r\n']); line = line + 1;
     metaData{line} = '} \r\n';
     
-    %create the file into which metaData will be saved:
+    %% Save as output
+    
+    % Create the file into which metaData will be saved:
     fileID = fopen('meta.txt', 'w');
     
+    % Write the metadata into the file:
     for p = 1:length(metaData)
         fprintf(fileID, metaData{p});
     end
