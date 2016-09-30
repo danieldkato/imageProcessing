@@ -1,6 +1,5 @@
 function [path, commit] = getVersion(path)
     [pathstr, name, ext] = fileparts(path);
-    disp(name);
     old = cd(pathstr);
     [status, commit] = system(strcat(['git rev-list --abbrev-commit -1 HEAD ', name, ext]));
     cd(old);
