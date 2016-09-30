@@ -1,6 +1,4 @@
 function [path, commit] = getVersion(path)
-    %path = which(fcnName);
-    %disp(path);
     [pathstr, name, ext] = fileparts(path);
     disp(name);
     old = cd(pathstr);
