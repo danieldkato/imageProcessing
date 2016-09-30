@@ -39,10 +39,6 @@ function writeMetadata(step, pipeline, varargin)
         inputEntries{i} = strcat(['''', inputs{i}{1},''':''', inputs{i}{2},'''']);
     end 
     
-    for i = 1:length(inputEntries)
-        disp(inputEntries(i))
-    end
-    
     % Make indiviual dictionary entries for each output:
     outputEntries = cell(1, length(outputs));
     for j = 1:length(outputs)
@@ -52,11 +48,7 @@ function writeMetadata(step, pipeline, varargin)
         end
         outputEntries{j} = strcat(['''', outputs{j}{1},''':''', outputs{j}{2},'''']);
     end 
-    
-    for i = 1:length(outputEntries)
-        disp(outputEntries(i))
-    end
-    
+
     % Make indiviual dictionary entries for each parameter:
     paramEntries = cell(1, length(inputs));
     for k = 1:length(parameters)
@@ -84,10 +76,6 @@ function writeMetadata(step, pipeline, varargin)
             fullPath = strjoin(splitted, '\\\\');
         end
         calledFunctions{i} = strcat([fullPath, ' ' commit]);
-    end
-    
-    for j = 1:length(calledFunctions)
-        disp(calledFunctions{j});
     end
     
     %% Write all " 'key':'value' " pairs into a dictionary with the format:
