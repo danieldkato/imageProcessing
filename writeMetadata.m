@@ -13,8 +13,6 @@
 % param line 2  <-- n params +
 % close bracket      1
 function writeMetadata(step, pipeline, varargin)
-    
-    disp(size(varargin));
 
     % Parse vargin into information about inputs, outputs and parameters:
     inputs = varargin{1};
@@ -34,24 +32,30 @@ function writeMetadata(step, pipeline, varargin)
     
     inputEntries = cell(1, length(inputs));
     for i = 1:length(inputs)
-        if isempty((strfind(inputs{i}{2}, '\')))
+        if ~isempty((strfind(inputs{i}{2}, '\')))
             splitted = strsplit(inputs{i}{2}, '\');
             inputs{i}{2} = strjoin(splitted, '\\\\');
         end
         inputEntries{i} = strcat(['''', inputs{i}{1},''':''', inputs{i}{2},'''']);
     end 
     
+    for i = 1:length(inputEntries)
+        disp(inputEntries(i))
+    end
     
     % Make indiviual dictionary entries for each output:
-    outputEntries = cell(1, length(inputs));
+    outputEntries = cell(1, length(outputs));
     for j = 1:length(outputs)
-        if ~isempty(strfind(outputs{i}{2}, '\'))
-            splitted = strsplit(outputs{i}{2}, '\');
-            outputs{i}{2} = strjoin(splitted, '\\\\');
+        if ~isempty(strfind(outputs{j}{2}, '\'))
+            splitted = strsplit(outputs{j}{2}, '\');
+            outputs{j}{2} = strjoin(splitted, '\\\\');
         end
         outputEntries{j} = strcat(['''', outputs{j}{1},''':''', outputs{j}{2},'''']);
     end 
     
+    for i = 1:length(outputEntries)
+        disp(outputEntries(i))
+    end
     
     % Make indiviual dictionary entries for each parameter:
     paramEntries = cell(1, length(inputs));
@@ -81,8 +85,10 @@ function writeMetadata(step, pipeline, varargin)
         end
         calledFunctions{i} = strcat([fullPath, ' ' commit]);
     end
-
-    disp(strcat(['length(calledFunctions) = ', num2str(length(calledFunctions)) ]));
+    
+    for j = 1:length(calledFunctions)
+        disp(calledFunctions{j});
+    end
     
     %% Write all " 'key':'value' " pairs into a dictionary with the format:
     
@@ -96,9 +102,10 @@ function writeMetadata(step, pipeline, varargin)
     metaData = cell(numLines, 1);
     metaData{line} = strcat([step, '_metadata = \r\n']); line = line + 1;
     
+    metaData{line} = strcat(['{''pipeline'':''', pipeline, ''', \r\n']); line = line + 1;
     
     % Write the input dictionary to metaData
-    metaData{line} = strcat(['{''inputs'':{', inputEntries{1}]);  %opening bracket of the input dictionary
+    metaData{line} = strcat([' ''inputs'':{', inputEntries{1}]);  %opening bracket of the input dictionary
     if length(inputEntries) == 1
         metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
     else
@@ -136,8 +143,6 @@ function writeMetadata(step, pipeline, varargin)
         end
         metaData{line} = strcat(['                 ''', calledFunctions{length(calledFunctions)}, '''] \r\n']); line = line + 1;
     end
-    
-    metaData{line} = strcat([' ''pipeline'':''', pipeline, ''', \r\n']); line = line + 1;
     
     % Write the parameters dictionary to metaData
     metaData{line} = strcat([' ''parameters'':{', paramEntries{1}]); %opening bracket of parameters dictionary
