@@ -7,9 +7,18 @@
 
 % https://github.com/epnev/ca_source_extraction/blob/master/documentation.pdf.
 
+% The purpose of this wrapper is to 1) save the relevant outputs of the
+% segmentation in a standardized format that will be compatible with
+% subsequent processing stages in a modular workflow, and 2) to forward and
+% append similarly standardized metadata. The overall workflow and metadata
+% design are described at:
+% 10.112.43.46\Public\dank\multiSens\analysis\README.txt.
+
+
 % REQUIREMENTS:
 % 1) ca_source_extraction, available at https://github.com/epnev/ca_source_extraction
-% 2) writeMetadata.m, available at https://github.com/danieldkato/metadata
+% 2) coor2txt.m, available at https://github.com/danieldkato/image_segmentation/blob/master/ca_source_extraction/coor2txt.m
+% 3) writeMetadata.m, available at https://github.com/danieldkato/metadata
 
 % INPUTS:
 % 1) inputPath - path to a motion-corrected multi-page TIFF stack to be segmented
@@ -33,6 +42,7 @@
 % the contours of the ROI, where n is the number of points used to
 % define its contours. 
 % 
+
 % 3) Coor2txt - a directory containing one text file for each ROI
 % identified by ca_source_extraction. Each text file contains an n x 2
 % matrix where n is the number of points that define the ROI. This can be
@@ -43,7 +53,7 @@
 
 function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
     %% load file 
-
+    
     addpath(genpath('../../ca_source_extraction'));
 
     nam = inputPath;                % insert path to tiff stack here
@@ -71,11 +81,11 @@ function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
     %% Data pre-processing
 
     [P,Y] = preprocess_data(Y,p);
-
+    
     %% fast initialization of spatial components using greedyROI and HALS
 
     [Ain,Cin,bin,fin,center] = initialize_components(Y,K,tau,options,P);  % initialize
-
+    
     % display centers of found components
     Cn =  reshape(P.sn,d1,d2); %correlation_image(Y); %max(Y,[],3); %std(Y,[],3); % image statistic (only for display purposes)
     figure;imagesc(Cn);
@@ -153,28 +163,22 @@ function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
     end 
 
     cd(outputPath);
-    save('Coor.mat', 'Coor');
     save('rawTraces.mat','C');
+    save('Coor.mat', 'Coor');
+    coor2txt(Coor);
     
     %% print metadata
     
-    %When printing a path as a string, '\' must be replaced with '\\' or
-    %else the former will be interpreted as an escape character
-    C = strsplit(inputPath, '\');
-    inputPath = strjoin(C, '\\\\');
-    
-    D = strsplit(outputPath, '\');
-    outputPath = strjoin(D, '\\\\');
-    
     inputs = {{'motion-corrected TIFF', inputPath}};
-    outputs = {{'segmented raw traces', strcat([outputPath, '\\rawTraces.mat'])},
-               {'ROI coordinates', strcat([outputPath, '\\Coor.mat'])}
+    outputs = {{'segmented raw traces', strcat([outputPath, '\\rawTraces.mat'])};
+               {'ROI coordinates (.mat)', strcat([outputPath, '\\Coor.mat'])};
+               {'ROI coordinates (.txt)', strcat([outputPath, '\\Coor2txt\\'])}
               };
-    params = {{'K', K},
-              {'tau', tau},
-              {'p', p},
+    params = {{'K', K};
+              {'tau', tau};
+              {'p', p};
               {'merge_thr', merge_thr}
              };
-    
+   
     writeMetadata('segmentation', 'ca_source_extraction', inputs, outputs, params);
 end
