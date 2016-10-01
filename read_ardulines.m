@@ -1,7 +1,38 @@
-    
+% Last updated DDK 2016-09-27    
+
+% OVERVIEW: 
+% This function takes a .txt file containing serial output read from an
+% Arduino running a given ArduFSM protocol for a single behavior session,
+% and returns a T x 1 cell array of the trial type of each trial delivered
+% during the session, where T is the number of trials delivered during the
+% session.
+
+
+% INPUTS: 
+% 1) input - a path to a .txt file containing serial output from an Arduino
+% running an ArduFSM protocol for a single behavior session. In accordance
+% with the general ArduFSM framework, each line of output either
+% acknowledges the receipt of instructions from the host PC, asserts
+% upcoming trial parameters, reports recorded behavior parameters, or
+% signals the start of a trial. More information about the ArduFSM
+% framework can be found at: 
+
+% https://github.com/cxrodgers/ArduFSM
+
+
+% OUTPUTS:
+% 1) trialTypes - a T x 1 cell array of strings describing the trial type
+% of each trial delivered over the course of a behavior session, where T is
+% the number of trials. Trial types are listed in the order they are
+% delivered.
+
+
+% TODO: 
+% This function is currently hard-coded to look for trial parameters and
+% return trial types specific to the multiSens protocol. It may be
+% worthwhile building more flexibility into this function. s
+
 function trialTypes = read_ardulines(input)
-    %inputPath = '\\10.112.43.46\Public\dank\multiSens\raw\1146-1\2P\160830\site6\grab001\ardulines.20160830130611';
-    %inputPath = '\\10.112.43.46\Public\dank\multiSens\raw\1146-1\2P\160901\site6\grab001\ardulines - Copy.20160901134327';
     fileID = fopen(input);
     C = textscan(fileID, '%s', 'Delimiter', '\r\n');
     C = C{1,1};
@@ -36,4 +67,4 @@ function trialTypes = read_ardulines(input)
             trialTypes{i} = 'stepper and speaker';
         end
     end
- end
+end
