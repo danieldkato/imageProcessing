@@ -56,7 +56,7 @@
 % This function also saves the output matrix as a .csv for future
 % processing, along with metadata about the registration itself.
 
-function [trialMatrix] = trial_registration(galvoPath, timerPath, ardulines, outputPath, grabPath, showInflectionPoints)
+function [trialMatrix] = register_trials2frames(galvoPath, timerPath, ardulines, outputPath, grabPath, showInflectionPoints)
     
     if nargin<6
         showInflectionPoints = 0;
