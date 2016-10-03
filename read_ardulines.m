@@ -32,6 +32,7 @@
 % return trial types specific to the multiSens protocol. It may be
 % worthwhile building more flexibility into this function. s
 
+%%
 function trialTypes = read_ardulines(input)
     fileID = fopen(input);
     C = textscan(fileID, '%s', 'Delimiter', '\r\n');
