@@ -3,8 +3,8 @@
 % OVERVIEW:
 % This function accepts a number of cell arrays containing analysis-related
 % metadata and writes them to a .txt file formatted as a dictionary-like
-% structure (ideally alongside the outputs of the analysis itself). It
-% should be called from every MATLAB function responsible for saving any
+% structure (ideally saved alongside the outputs of the analysis itself).
+% It should be called from every MATLAB function responsible for saving any
 % kind of output.
 
 % The idea is that all saved, processed data should be associated with some
@@ -104,10 +104,11 @@
 % information about what scripts, etc., were used to create the output.
 
 
-function writeMetadata(step, pipeline, inputs, outputs, parameters)    
+%%
+function writeMetadata(step, pipeline, inputCells, outputCells, paramCells)    
     % (should probably do some validation here)
     
-    numLines = length(inputs)+length(outputs)+length(parameters)+2;
+    numLines = length(inputCells)+length(outputCells)+length(paramCells)+2;
     
     %% Reformat all cells of the form {'key', 'value'} as strings of the form " 'key':'value' " :
     
@@ -116,38 +117,32 @@ function writeMetadata(step, pipeline, inputs, outputs, parameters)
     
     % " 'key1':'value1' "
     
-    inputEntries = cell(1, length(inputs));
-    for i = 1:length(inputs)
-        if ~isempty((strfind(inputs{i}{2}, '\')))
-            splitted = strsplit(inputs{i}{2}, '\');
-            inputs{i}{2} = strjoin(splitted, '\\\\');
-        end
-        inputEntries{i} = strcat(['''', inputs{i}{1},''':''', inputs{i}{2},'''']);
+    inputDictEntries = cell(1, length(inputCells));
+    for i = 1:length(inputCells)
+        inputCells{i}{2} = strrep(inputCells{1}{2}, '\', '\\\\');
+        inputDictEntries{i} = strcat(['''', inputCells{i}{1},''':''', inputCells{i}{2},'''']);
     end 
     
     % Make indiviual dictionary entries for each output:
-    outputEntries = cell(1, length(outputs));
-    for j = 1:length(outputs)
-        if ~isempty(strfind(outputs{j}{2}, '\'))
-            splitted = strsplit(outputs{j}{2}, '\');
-            outputs{j}{2} = strjoin(splitted, '\\\\');
-        end
-        outputEntries{j} = strcat(['''', outputs{j}{1},''':''', outputs{j}{2},'''']);
+    outputDictEntries = cell(1, length(outputCells));
+    for j = 1:length(outputCells)
+        outputCells{j}{2} = strrep(outputCells{j}{2}, '\', '\\\\');
+        outputDictEntries{j} = strcat(['''', outputCells{j}{1},''':''', outputCells{j}{2},'''']);
     end 
 
     % Make indiviual dictionary entries for each parameter:
-    paramEntries = cell(1, length(parameters));
+    paramDictEntries = cell(1, length(paramCells));
     disp('length parameters = ');
-    disp(length(parameters));
-    for k = 1:length(parameters)
-        if isa(parameters{k}{2}, 'char')
-            paramEntries{k} = strcat(['''', parameters{k}{1},''':''', parameters{k}{2},'''']);
-        elseif isnumeric(parameters{k}{2})
-            paramEntries{k} = strcat(['''', parameters{k}{1},''':', num2str(parameters{k}{2})]);
+    disp(length(paramCells));
+    for k = 1:length(paramCells)
+        if isa(paramCells{k}{2}, 'char')
+            paramDictEntries{k} = strcat(['''', paramCells{k}{1},''':''', paramCells{k}{2},'''']);
+        elseif isnumeric(paramCells{k}{2})
+            paramDictEntries{k} = strcat(['''', paramCells{k}{1},''':', num2str(paramCells{k}{2})]);
         end
     end
     disp('length paramEntries = ');
-    disp(length(paramEntries));
+    disp(length(paramDictEntries));
     
     
     
@@ -161,10 +156,7 @@ function writeMetadata(step, pipeline, inputs, outputs, parameters)
     calledFunctions = cell(1, length(fListMax));
     for i = 1:length(fList)
         [fullPath, commit] = getVersion(fList{i});
-        if ~isempty((strfind(fullPath, '\')))
-            splitted = strsplit(fullPath, '\');
-            fullPath = strjoin(splitted, '\\\\');
-        end
+        fullPath = strrep(fullPath, '\', '\\\\');
         calledFunctions{i} = strcat([fullPath, ' ' commit]);
     end
     
@@ -179,30 +171,30 @@ function writeMetadata(step, pipeline, inputs, outputs, parameters)
     metaData{line} = strcat(['{''pipeline'':''', pipeline, ''', \r\n']); line = line + 1;
     
     % Write the input dictionary to metaData
-    metaData{line} = strcat([' ''inputs'':{', inputEntries{1}]);  %opening bracket of the input dictionary
-    if length(inputEntries) == 1
+    metaData{line} = strcat([' ''inputs'':{', inputDictEntries{1}]);  %opening bracket of the input dictionary
+    if length(inputDictEntries) == 1
         metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
     else
         metaData{line} = strcat([metaData{line}, ', \r\n']);
         line = line + 1;
-        for m = 2:length(inputEntries)-1
-            metaData{line} = strcat(['           ', inputEntries{m}, ', \r\n']); line = line + 1;
+        for m = 2:length(inputDictEntries)-1
+            metaData{line} = strcat(['           ', inputDictEntries{m}, ', \r\n']); line = line + 1;
         end
-        metaData{line} = strcat(['           ', inputEntries{length(inputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of the input dictionary
+        metaData{line} = strcat(['           ', inputDictEntries{length(inputDictEntries)}, '}, \r\n']); line = line + 1; %closing bracket of the input dictionary
     end
     
     
     % Write the output dictionary to metaData
-    metaData{line} = strcat([' ''outputs'':{', outputEntries{1}]); %opening bracket of the output dictionary
-    if length(outputEntries) < 2
+    metaData{line} = strcat([' ''outputs'':{', outputDictEntries{1}]); %opening bracket of the output dictionary
+    if length(outputDictEntries) < 2
         metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
     else
         metaData{line} = strcat([metaData{line}, ', \r\n']);
         line = line + 1;
-        for n = 2:length(outputEntries)-1
-            metaData{line} = strcat(['            ', outputEntries{n}, ', \r\n']); line = line + 1;
+        for n = 2:length(outputDictEntries)-1
+            metaData{line} = strcat(['            ', outputDictEntries{n}, ', \r\n']); line = line + 1;
         end    
-        metaData{line} = strcat(['            ', outputEntries{length(outputEntries)}, '}, \r\n']); line = line + 1; %closing bracket of output dictionary
+        metaData{line} = strcat(['            ', outputDictEntries{length(outputDictEntries)}, '}, \r\n']); line = line + 1; %closing bracket of output dictionary
     end
     
     %Write the calling function's dependencies to metaData
@@ -219,19 +211,19 @@ function writeMetadata(step, pipeline, inputs, outputs, parameters)
     end
     
     % Write the parameters dictionary to metaData
-    if length(paramEntries) > 0
-        metaData{line} = strcat([' ''parameters'':{', paramEntries{1}]); %opening bracket of parameters dictionary
-        if length(paramEntries) < 2
+    if length(paramDictEntries) > 0
+        metaData{line} = strcat([' ''parameters'':{', paramDictEntries{1}]); %opening bracket of parameters dictionary
+        if length(paramDictEntries) < 2
             metaData{line} = strcat([metaData{line}, '} \r\n']); line = line + 1;
         else
             metaData{line} = strcat([metaData{line}, ', \r\n']);
             line = line + 1;
-            for n = 2:length(paramEntries)-1
-                metaData{line} = strcat(['               ', paramEntries{n}, ', \r\n']); line = line + 1;
+            for n = 2:length(paramDictEntries)-1
+                metaData{line} = strcat(['               ', paramDictEntries{n}, ', \r\n']); line = line + 1;
             end
-            metaData{line} = strcat(['               ', paramEntries{length(paramEntries)}, '}, \r\n']); line = line + 1; %closing bracket of parameters dictionary
+            metaData{line} = strcat(['               ', paramDictEntries{length(paramDictEntries)}, '}, \r\n']); line = line + 1; %closing bracket of parameters dictionary
         end
-    elseif length(paramEntries) == 0
+    elseif length(paramDictEntries) == 0
         metaData{line} = ' ''parameters'':{}, \r\n'; line = line + 1;%opening bracket of parameters dictionary
     end
     metaData{line} = '} \r\n';
