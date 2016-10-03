@@ -2,23 +2,25 @@
 
 % OVERVIEW: 
 % This script is a wrapper for doing image segmentation using Eftykios
-% Pnevmatikakis' ca_source_extraction software. For more detail on how it
-% works, visit:
+% Pnevmatikakis' ca_source_extraction package. For documentation, see:
 
 % https://github.com/epnev/ca_source_extraction/blob/master/documentation.pdf.
 
-% The purpose of this wrapper is to 1) save the relevant outputs of the
-% segmentation in a standardized format that will be compatible with
-% subsequent processing stages in a modular workflow, and 2) to forward and
-% append similarly standardized metadata. The overall workflow and metadata
-% design are described at:
+% The purpose of this wrapper is to: 
+% 1) save the outputs in a standardized format that will be compatible with
+% subsequent processing stages in the modular workflow described here:
+
 % 10.112.43.46\Public\dank\multiSens\analysis\README.txt.
+
+% 2) to forward and append similarly standardized metadata, also described
+% in the link above.
 
 
 % REQUIREMENTS:
 % 1) ca_source_extraction, available at https://github.com/epnev/ca_source_extraction
 % 2) coor2txt.m, available at https://github.com/danieldkato/image_segmentation/blob/master/ca_source_extraction/coor2txt.m
 % 3) writeMetadata.m, available at https://github.com/danieldkato/metadata
+
 
 % INPUTS:
 % 1) inputPath - path to a motion-corrected multi-page TIFF stack to be segmented
@@ -33,7 +35,7 @@
 % This script does not formally return anything, but it creates and saves
 % four outputs in the directory specified by outputPath:
 
-% 1) rawTraces.mat - a K x T matrix of demixed activity traces for each
+% 1) rawTraces.csv - a K x T matrix of demixed activity traces for each
 % ROI, where K is the number of ROIs and T is the number of frames in the
 % grab.
 % 
@@ -41,7 +43,6 @@
 % identified ROI. Each cell is a 2 x n matrix of coordinates defining
 % the contours of the ROI, where n is the number of points used to
 % define its contours. 
-% 
 
 % 3) Coor2txt - a directory containing one text file for each ROI
 % identified by ca_source_extraction. Each text file contains an n x 2
@@ -163,16 +164,16 @@ function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
     end 
 
     cd(outputPath);
-    save('rawTraces.mat','C');
+    csvwrite('rawTraces.csv', C);
     save('Coor.mat', 'Coor');
     coor2txt(Coor);
     
     %% print metadata
     
     inputs = {{'motion-corrected TIFF', inputPath}};
-    outputs = {{'segmented raw traces', strcat([outputPath, '\\rawTraces.mat'])};
-               {'ROI coordinates (.mat)', strcat([outputPath, '\\Coor.mat'])};
-               {'ROI coordinates (.txt)', strcat([outputPath, '\\Coor2txt\\'])}
+    outputs = {{'segmented raw traces', strcat([outputPath, '\rawTraces.mat'])};
+               {'ROI coordinates (.mat)', strcat([outputPath, '\Coor.mat'])};
+               {'ROI coordinates (.txt)', strcat([outputPath, '\Coor2txt\'])}
               };
     params = {{'K', K};
               {'tau', tau};
