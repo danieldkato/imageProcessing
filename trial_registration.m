@@ -5,6 +5,7 @@
 % type for every trial delivered during a given grab, where T is the number
 % of trials delivered during the grab.
 
+
 % REQUIREMENTS:
 % This function requires the following data:
 % 1) A trace of the analog voltage signal used to drive the slow
@@ -14,7 +15,7 @@
 % during the grab. The script currently assumes that all analog data has
 % been saved in a LabView .dat format.
 
-% Specific software dependencies include:
+% This function requires the following software:
 % 1) The MATLAB function readContinuousDAT, available at https://github.com/gpierce5/BehaviorAnalysis/blob/master/readContinuousDAT.m (commit 71b3a3c)
 % 2) The MATLAB function LocalMinima, available at \\hsbruno05\Users\dan\Documents\MATLAB\clay\LocalMinima.m
 % 3) The MATLAB function read_ardulines, available at https://github.com/danieldkato/trial_registration/blob/master/read_ardulines.m
@@ -65,7 +66,8 @@ function [trialMatrix] = trial_registration(galvoPath, timerPath, ardulines, out
     %% Load data:
     galvoTrace = readContinuousDAT(galvoPath); % Load the galvanometer data from the raw .dat file into an s x 1 vector, where s is number of samples taken during grab 
     timerTrace = readContinuousDAT(timerPath); % Load the trial timer data from the raw .dat file into an s x 1 vector, where s is the number of samples taken during a grab
-
+    trialTypes = read_ardulines(ardulines); %% Get an ordered list of trial types from arudlines
+    
     
     %% Get the start time of every frame (in terms an index into the galvanometer trace)
     
@@ -125,10 +127,6 @@ function [trialMatrix] = trial_registration(galvoPath, timerPath, ardulines, out
         [M, I] = max(frameOnsetSamples( frameOnsetSamples <= trialOnsetSamples(i) ));
         trialStartFrames{i} = I;
     end
-    
-    
-    %% Get an ordered list of trial types from arudlines
-    trialTypes = read_ardulines(ardulines);
 
     
     %% Merge the trial start time and trial type information
