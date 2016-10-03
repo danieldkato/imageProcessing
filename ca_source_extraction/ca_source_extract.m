@@ -1,7 +1,7 @@
 % Last updated DDK 2016-09-28
 
 % OVERVIEW: 
-% This script is a wrapper for doing image segmentation using Eftykios
+% This function is a wrapper for doing image segmentation using Eftykios
 % Pnevmatikakis' ca_source_extraction package. For documentation, see:
 
 % https://github.com/epnev/ca_source_extraction/blob/master/documentation.pdf.
