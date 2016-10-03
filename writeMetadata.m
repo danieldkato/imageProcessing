@@ -1,9 +1,9 @@
 % Last updated DDK 2016-9-29
 
 % OVERVIEW:
-% This function takes several cell arrays containing analysis-related
+% This function accepts a number of cell arrays containing analysis-related
 % metadata and writes them to a .txt file formatted as a dictionary-like
-% structure, ideally alongside the outputs of the analysis itself. It
+% structure (ideally alongside the outputs of the analysis itself). It
 % should be called from every MATLAB function responsible for saving any
 % kind of output.
 
@@ -86,24 +86,25 @@
 
 
 % TODO: 
+% Need to think about how to copy over metadata associated with inputs.
+% This is critical to the metadata forwarding scheme described in: 
+
+% \\10.112.43.45\Public\dank\multiSens\analysis\README.txt
+
 % Should probably include some way of dealing with situations when a
-% meta.txt file already exists. Also, should think about whether the idea
-% of the 'pipeline' is a useful level of abstraction or if it will just
-% confuse people; on the one hand, in situations when there exist several
-% alternative possible strategies for accomplishing the current
-% data-processing step, I find it a succinct way of getting across which of
-% several alternative strategies was used to accomplish the present
-% data-processing step; on the other hand, it's not strictly necessary, as
-% meta.txt already contains finer-grained information about what scripts,
-% etc., were used to create the output.
+% meta.txt file already exists. 
 
-function writeMetadata(step, pipeline, varargin)
+% Also, should think about whether the idea of the 'pipeline' is a useful
+% level of abstraction or if it will just confuse people; on the one hand,
+% in situations when there exist several alternative possible strategies
+% for accomplishing the current data-processing step, I find it a succinct
+% way of getting across which of several alternative strategies was used to
+% accomplish the present data-processing step; on the other hand, it's not
+% strictly necessary, as meta.txt already contains finer-grained
+% information about what scripts, etc., were used to create the output.
 
-    % Parse vargin into information about inputs, outputs and parameters:
-    inputs = varargin{1};
-    outputs = varargin{2};
-    parameters = varargin{3};
-    
+
+function writeMetadata(step, pipeline, inputs, outputs, parameters)    
     % (should probably do some validation here)
     
     numLines = length(inputs)+length(outputs)+length(parameters)+2;
