@@ -29,8 +29,7 @@
 % 4) tau - std of gaussian kernel (size of neuron)
 % 5) order of autoregressive system (p = 0 no dynamics, p=1 just decay, p = 2, both rise and decay)
 % 6) merging threshold
-% 7) initialization method - this can be either 'greedy' (for soma) or
-% 'sparse_NMF'(for processes). See ca_source_extraction docs for details. 
+% 7) initialization method - this can be either 'greedy' (for soma) or 'sparse_NMF'(for processes). See ca_source_extraction docs for details. 
 
 
 % OUTPUTS:
