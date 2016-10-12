@@ -37,13 +37,14 @@
 % four outputs in the directory specified by outputPath:
 
 % 1) rawTraces.csv - a K x T matrix of demixed activity traces for each
-% ROI, where K is the number of ROIs and T is the number of frames in the
-% grab.
+% ROI, where K is the number of ROIs identified by the algorithm and T is
+% the number of frames in the grab.
 % 
 % 2) Coor.mat - a K x 1 cell array containing the coordinates of every
-% identified ROI. Each cell is a 2 x n matrix of coordinates defining
-% the contours of the ROI, where n is the number of points used to
-% define its contours. 
+% identified ROI, where K is the number of ROIs identified by the
+% algorithm. Each cell is a 2 x n matrix of coordinates defining the
+% contours of the ROI, where n is the number of points used to define its
+% contours.
 
 % 3) Coor2txt - a directory containing one text file for each ROI
 % identified by ca_source_extraction. Each text file contains an n x 2
