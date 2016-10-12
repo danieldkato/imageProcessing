@@ -29,6 +29,8 @@
 % 4) tau - std of gaussian kernel (size of neuron)
 % 5) order of autoregressive system (p = 0 no dynamics, p=1 just decay, p = 2, both rise and decay)
 % 6) merging threshold
+% 7) initialization method - this can be either 'greedy' (for soma) or
+% 'sparse_NMF'(for processes). See ca_source_extraction docs for details. 
 
 
 % OUTPUTS:
@@ -52,16 +54,16 @@
 %
 % 4) meta.txt - a metadata file.
 
-function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
+function ca_source_extract(nam, outputPath, K, tau, p, merge_thr, init_method)
     %% load file 
+    
+    if nargin < 7
+        init_method = 'greedy';
+    end
     
     addpath(genpath('../../ca_source_extraction'));
 
-    nam = inputPath;                % insert path to tiff stack here
-    sframe=1;						% user input: first frame to read (optional, default 1)
-    num2read=2000;					% user input: how many frames to read   (optional, default until the end)
-
-    Y = bigread2(nam,sframe,num2read);
+    Y = bigread2(nam);
     Y = Y - min(Y(:)); 
     if ~isa(Y,'single');    Y = single(Y);  end         % convert to single
 
@@ -77,7 +79,8 @@ function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
         'temporal_iter',2,...                       % number of block-coordinate descent steps 
         'fudge_factor',0.98,...                     % bias correction for AR coefficients
         'merge_thr',merge_thr,...                    % merging threshold 
-        'gSig',tau...
+        'gSig',tau,...
+        'init_method',init_method...
         );
     %% Data pre-processing
 
@@ -170,7 +173,7 @@ function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
     
     %% print metadata
     
-    inputs = {{'motion-corrected TIFF', inputPath}};
+    inputs = {{'motion-corrected TIFF', nam}};
     outputs = {{'segmented raw traces', strcat([outputPath, '\rawTraces.mat'])};
                {'ROI coordinates (.mat)', strcat([outputPath, '\Coor.mat'])};
                {'ROI coordinates (.txt)', strcat([outputPath, '\Coor2txt\'])}
@@ -178,7 +181,8 @@ function ca_source_extract(inputPath, outputPath, K, tau, p, merge_thr)
     params = {{'K', K};
               {'tau', tau};
               {'p', p};
-              {'merge_thr', merge_thr}
+              {'merge_thr', merge_thr};
+              {'init_method', init_method}
              };
    
     writeMetadata('segmentation', 'ca_source_extraction', inputs, outputs, params);
