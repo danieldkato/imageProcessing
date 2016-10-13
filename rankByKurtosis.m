@@ -13,9 +13,10 @@
 
 
 % INPUTS:
-% 1) input - a K x T matrix of activity measured from K
-% automatically-segmented ROIs, where T is the number of frames in the grab
-% (e.g., the rawTraces.csv output by ca_source_extract.m).
+% 1) input - path to a K x T matrix of activity measured from K
+% automatically-segmented ROIs, where T is the number of frames in the
+% grab, saved as a .csv (e.g., the rawTraces.csv output by
+% ca_source_extract.m).
 
 
 % OUTPUTS: 
