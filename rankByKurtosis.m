@@ -72,9 +72,11 @@ function Kurtoses = rankByKurtosis(input)
         text(0.1, 0.80, strcat(['k = ', num2str(Kurtoses(k, 2))]), 'Units', 'normalized', 'FontSize', 6);
     end
 
+    % Plot histogram of kurtosis values:
     figure;
     histogram(Kurtoses(:,2));
     
+    % Write header row:
     header = cell(1, 5);
     header{1, 1} = 'ROI #';
     header{1, 2} = 'kurtosis';
@@ -82,6 +84,7 @@ function Kurtoses = rankByKurtosis(input)
     header{1, 4} = 'annotation';
     header{1, 5} = 'notes';
     
+    % Add header row to kurtosis-ordered ROI matrix and save to disk:
     fid = fopen('kurtoses.csv', 'w');
     fprintf(fid, '%s,', header{1,1:end-1});
     fprintf(fid, '%s\n', header{1,end});
