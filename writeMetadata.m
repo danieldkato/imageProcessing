@@ -28,11 +28,11 @@
 % pipeline might include 'NMF', or 'STICA'. This level of abstraction is
 % described more at the address listed above.
 
-% 3) inputs - a cell array containing paths to the data processed by the
+% 3) inputCells - a cell array containing paths to the data processed by the
 % calling function. inputs should be formatted as a cell array of 1 x 2
 % cell arrays of field-value pairs, as follows:
 
-% inputs = { {'input field 1', 'path\to\input1'};
+% inputCells = { {'input field 1', 'path\to\input1'};
 %            {'input field 2', 'path\to\input2'}; 
 %            {'input field 3', 'path\to\input3'}};
 
@@ -41,15 +41,15 @@
 % motion-corrected, or raw gavlo and timer data to be registered to each
 % other.
 
-% 4) outputs - a cell array containing paths to whatever files or
+% 4) outputCells - a cell array containing paths to whatever files or
 % directories are created and saved by the calling function, e.g., a
 % motion-corrected TIFF. This should have the same format as inputs.
 
-% 5) parameters - a cell array containing important parameters used to
+% 5) paramCells - a cell array containing important parameters used to
 % perform the current processing step. Should be formatted the same as
 % inputs and outputs. For example:
 
-% parameters = { {'K', 100};
+% paramCells = { {'K', 100};
 %                {'tau', 2};
 %                {'p', 1}};
 
@@ -119,14 +119,14 @@ function writeMetadata(step, pipeline, inputCells, outputCells, paramCells)
     
     inputDictEntries = cell(1, length(inputCells));
     for i = 1:length(inputCells)
-        inputCells{i}{2} = strrep(inputCells{1}{2}, '\', '\\\\');
+        inputCells{i}{2} = strrep(inputCells{1}{2}, '\', '\\');
         inputDictEntries{i} = strcat(['''', inputCells{i}{1},''':''', inputCells{i}{2},'''']);
     end 
     
     % Make indiviual dictionary entries for each output:
     outputDictEntries = cell(1, length(outputCells));
     for j = 1:length(outputCells)
-        outputCells{j}{2} = strrep(outputCells{j}{2}, '\', '\\\\');
+        outputCells{j}{2} = strrep(outputCells{j}{2}, '\', '\\');
         outputDictEntries{j} = strcat(['''', outputCells{j}{1},''':''', outputCells{j}{2},'''']);
     end 
 
@@ -156,7 +156,7 @@ function writeMetadata(step, pipeline, inputCells, outputCells, paramCells)
     calledFunctions = cell(1, length(fListMax));
     for i = 1:length(fList)
         [fullPath, commit] = getVersion(fList{i});
-        fullPath = strrep(fullPath, '\', '\\\\');
+        fullPath = strrep(fullPath, '\', '\\');
         calledFunctions{i} = strcat([fullPath, ' ' commit]);
     end
     
