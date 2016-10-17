@@ -167,7 +167,7 @@ function ca_source_extract(nam, outputPath, K, tau, p, merge_thr, init_method)
     end 
 
     cd(outputPath);
-    csvwrite('rawTraces.csv', C);
+    csvwrite('rawTraces.csv', C2);
     save('Coor.mat', 'Coor');
     coor2txt(Coor);
     
