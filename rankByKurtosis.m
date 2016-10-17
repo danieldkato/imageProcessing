@@ -2,8 +2,8 @@
 
 % OVERVIEW:
 % This function takes activity traces of ROIs segmented from a given grab
-% and sorts them by the kurtosis of their pixel values, in descending
-% order. It is intended as a heuristic in aiding the manual refinement of
+% and sorts them by the kurtosis of their pixel values in descending order.
+% It is intended as a heuristic in aiding the manual refinement of
 % automatically-indetified ROIs, the idea being that
 % automatically-identified ROIs with low kurtosis values may be more likely
 % to be false positives.
