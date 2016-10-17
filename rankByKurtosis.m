@@ -1,15 +1,17 @@
 % Last updated DDK 2016-10-12
 
 % OVERVIEW:
+% This function takes activity traces of ROIs segmented from a given grab
+% and sorts them by the kurtosis of their pixel values, in descending
+% order. It is intended as a heuristic in aiding the manual refinement of
+% automatically-indetified ROIs, the idea being that
+% automatically-identified ROIs with low kurtosis values may be more likely
+% to be false positives.
+
 % This function takes a K x T matrix of activity from a given grab, where K
 % is the number of ROIs segmented from the grab and T is the number of
 % frames in the grab, and returns a list of ROIs ordered by the kurtosis of
 % their pixel values from highest to lowest. 
-
-% This function is intended as a heuristic in aiding the manual refinement
-% of automatically-indetified ROIs, the idea being that
-% automatically-identified ROIs with low kurtosis values may be more likely
-% to be false positives.
 
 
 % INPUTS:
