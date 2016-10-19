@@ -11,21 +11,21 @@
 
 
 % REQUIREMENTS:
-% This function requires a set of automatically-segmented ROIs that have
-% been hand-annotated as either true positives or false positives.
+% This function requires a set of automatically-segmented ROIs, each of
+% which has been subsequently hand-annotated as either accepted as a real
+% cell soma or rejected as note corresponding to a real cell soma.
 
 
 % INPUTS:
 % 1) rois - path to a .csv containing a K x 4 matrix of
 % automatically-segmented ROIs from a given grab, sorted in descending
-% order by kurtosis and hand-annotated as either true positives or false
-% positives. This file should be of the same format returned by
-% rankByKurtosis.m, i.e.:
+% order by kurtosis and hand-annotated as either accepted or rejected. This
+% file should be of the same format returned by rankByKurtosis.m, i.e.:
 
 % column 1: ROI number 
 % column 2: kurtosis
 % column 3: max value
-% column 4: hand-annotated value: 1 for true positive, 0 for false positive
+% column 4: hand-annotated value: 1 for accepted, 0 for rejected
 
 % Also note that the file is expected to have one header row, so the first
 % row is skipped when read into this function.
@@ -39,8 +39,8 @@
 
 %%
 function kurtosisROC(rois)
-    kurtoses = csvread(rois, 1, 0);
-
+    kurtoses = xlsread(rois);
+    
     kurtoses = flipud(kurtoses); %flip this so that kurtosis increases as we iterate through it
     FP = zeros(length(kurtoses),1); % vector of number of false positives for each possible kurtosis cutoff value
     TP = zeros(length(kurtoses),1); % vector of number of true positives for each possible kurtosis cutoff value
@@ -48,16 +48,20 @@ function kurtosisROC(rois)
     % For each kurtosis value, get the number of true and false positives above
     % that kurtosis value:
     for i = 1:length(kurtoses)
-        TP(i) = sum(kurtoses(i:end,4));
-        FP(i) = ((length(kurtoses)-i+1) - TP(i));
+        TP(i) = sum(kurtoses(i:end,4)); % number of true positives above i-th kurtosis level
+        FP(i) = ((length(kurtoses)-i+1) - TP(i)); % number of false positives above i-th kurtosis level
     end
 
-    totalTP = sum(kurtoses(:,4));
-    totalTN = length(kurtoses) - totalTP;
+    % Get the total number of automatically-identified ROIs that correspond
+    % to true cell soma (as judged by a human annotator) and the number
+    % that don't
+    totalPos = sum(kurtoses(:,4)); % total number of ROIs that actually correspond to a cell
+    totalNeg = length(kurtoses) - totalPos; % total number of ROIs that don't actually correcpond to a cell
 
-    FPR = FP./(totalTN*ones(length(kurtoses),1)); % false positive rate
-    TPR = TP./(totalTP*ones(length(kurtoses),1)); % true positive rate
+    FPR = FP./(totalNeg*ones(length(kurtoses),1)); % false positive rate (sum(false positive)/sum(condition negative))
+    TPR = TP./(totalPos*ones(length(kurtoses),1)); % true positive rate (sum(true positive)/sum(condition positive))
 
+    % Plot ROC curve:
     figure;
     plot(FPR, TPR);
     xl = xlim;
