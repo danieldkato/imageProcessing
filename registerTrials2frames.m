@@ -56,7 +56,7 @@
 % This function also saves the output matrix as a .csv for future
 % processing, along with metadata about the registration itself.
 
-function [trialMatrix] = register_trials2frames(galvoPath, timerPath, ardulines, outputPath, grabPath, showInflectionPoints)
+function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, outputPath, grabPath, showInflectionPoints)
     
     if nargin<6
         showInflectionPoints = 0;
@@ -79,7 +79,8 @@ function [trialMatrix] = register_trials2frames(galvoPath, timerPath, ardulines,
     framePeriod = 1/frameRate;
     sampleRate = 16000; % Samples per second; Also a constant for now, but I should think about how to make this get the sample rate at runtime
     minDistanceGalvo = framePeriod * sampleRate; % The function LocalMinima will include only the lowest of any local minima found within this many samples of each other
-    galvoThreshold = -1.8; % Whatever units gavloTrace is expressed in (Volts, I think); the function LocalMinima will exclude any local minima higher than this value; for the time being, I just got this from eyeballing a sample galvo trace, but I may ultimately need more sophisticated ways of getting this if there's any variability
+    minDistanceGalvo = minDistanceGalvo * .9;
+    galvoThreshold = -1.6; % Whatever units gavloTrace is expressed in (Volts, I think); the function LocalMinima will exclude any local minima higher than this value; for the time being, I just got this from eyeballing a sample galvo trace, but I may ultimately need more sophisticated ways of getting this if there's any variability
     
     frameOnsetSamples = LocalMinima(galvoTrace, minDistanceGalvo, galvoThreshold); %returns a vector of indices into the input trace
     
@@ -132,11 +133,16 @@ function [trialMatrix] = register_trials2frames(galvoPath, timerPath, ardulines,
     %% Merge the trial start time and trial type information
     trialMatrix = cell(length(trialOnsetSamples), 2);
     trialMatrix(:, 1) = trialStartFrames;
+    disp(size(trialOnsetSamples));
+    disp(size(trialTypes));
     trialMatrix(:, 2) = trialTypes; 
     
     
+    
     %% Write trialMatrix to a .csv 
-    fileID = fopen('trialMatrix.csv', 'w');
+    filename = fullfile(outputPath, 'trialMatrix.csv');
+    fileID = fopen(filename, 'w');
+    %fileID = fopen('trialMatrix.csv', 'w');
     
     % write header:
     if exist('grabPath', 'var')
@@ -169,7 +175,8 @@ function [trialMatrix] = register_trials2frames(galvoPath, timerPath, ardulines,
     outputs = {{'trial matrix', strcat([outputPath, 'triaMatrix.csv'])}};
     parameters = {};
     
+    old = cd(outputPath);
     writeMetadata('trial_registration', 'sampleDomain', inputs, outputs, parameters);
-    
+    cd(old);
     
 end
