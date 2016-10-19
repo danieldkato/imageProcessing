@@ -146,7 +146,7 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     
     % write header:
     if exist('grabPath', 'var')
-        fprintf(fileID, strcat(['Grab,', grabPath, '\n']));
+        fprintf(fileID, strcat(['Grab,', strrep(grabPath,'\','\\'), '\n']));
     else
         fprintf(fileID, strcat(['Grab, none specified \n']));
     end
