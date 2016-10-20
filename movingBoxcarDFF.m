@@ -70,7 +70,6 @@ function dFF = movingBoxcarDFF(input, m, n, output)
     
     old = cd(output);
     csvwrite('dFF.csv', dFF);
-    cd(old);
     
     %% Write metadata:
     
@@ -79,5 +78,7 @@ function dFF = movingBoxcarDFF(input, m, n, output)
     params = {{'pre', m};
               {'post', n}};
     
-    writeMetadata('compute dF/F', 'moving boxcar average', inputs, outputs, params);
+    writeMetadata('compute_dF/F', 'moving boxcar average', inputs, outputs, params);
+    
+    cd(old);
 end
