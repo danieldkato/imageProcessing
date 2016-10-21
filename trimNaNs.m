@@ -49,8 +49,7 @@ function [tracesOut, startOffset, stopOffset] = trimNaNs(tracesIn)
     % Get offsets:
     row = sum(whereNans,1); 
     shiftRowRight = [0, row(1:end-1)];
-    shiftRowLeft = [row(2:end), 0];
-    
     startOffset = find(shiftRowRight>row);
+    shiftRowLeft = [row(2:end), 0];
     stopOffset = find(shiftRowLeft>row);
 end
