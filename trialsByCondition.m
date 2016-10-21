@@ -42,7 +42,7 @@
 
 
 %%
-function [T] = trialsByCondition(activity, trials, conditionNames, preStim, postStim)
+function T = trialsByCondition(activity, trials, conditionNames, preStim, postStim)
 
     numConditions = size(conditionNames, 1);
     T = cell(numConditions, 1);
