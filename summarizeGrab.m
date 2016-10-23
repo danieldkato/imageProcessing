@@ -55,6 +55,9 @@
 
 % 6) outputDirectory - directory where all created figures should be saved.
 
+% OUTPUTS:
+% This function has no formal return, but saves the plots described above
+% for the given data acquisition session.
 
 function summarizeGrab(activity, trials, conditions, preStim, postStim, outputDirectory)
     
