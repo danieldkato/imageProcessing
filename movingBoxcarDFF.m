@@ -48,7 +48,7 @@ function dFF = movingBoxcarDFF(input, m, n, output)
     % an anonymous function @(i) dat(:,i)/mean(dat(:,i-m:i+2)). arrayfun will
     % sequentially iterate through includedFrames and substitute every
     % element for i.
-    dFF = arrayfun(@(i) dat(:,i)./mean(dat(:,i-m:i+n),2), includedFrames, 'UniformOutput', 0);
+    dFF = arrayfun(@(i) (dat(:,i)-mean(dat(:,i-m:i+n),2)) ./ mean(dat(:,i-m:i+n),2), includedFrames, 'UniformOutput', 0);
     
     % Convert dFF from a cell array to a matrix (each iteration of @(i) by
     % arrayfun results in a K x 1 vector, and the output of each iteration
