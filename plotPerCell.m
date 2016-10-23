@@ -1,4 +1,90 @@
-function plotPerCell(activity, trials, conditions, preStimS, postStimS, outputDirectory)
+% Last updated DDK 2016-10-23
+
+% OVERVIEW:
+% This function produces summary plots for every ROI recorded from a given
+% acquisition session during which multiple different trial or stimulus
+% conditions are presented. For every ROI, this function produces 2 plots:
+
+% 1) A plot with mean dF/F traces plus SEM bars for each condition, and
+% 2) A plot with dF/F traces for every individual trial, color-coded by condition
+
+
+% REQUIREMENTS:
+% 1) The MATLAB function trialsByCondition, available at:
+% https://github.com/danieldkato/trial_registration/blob/master/trialsByCondition.m
+
+% This function should only be used on datasets where the stimulus period
+% for all trials is the same. This function draws a shaded rectangle over
+% the area corresponding to the stimulus period on every plot, so the
+% figures are really only sensible if the stimulus period for all trials is
+% the same.
+
+
+% INPUTS:
+% 1) activity - N x T activity matrix, where N is the number of ROIs and T
+% is the number of frames to be analyzed.
+
+% 2) trials - S x 2 cell array, where S is the number of trials to be
+% analyzed. Each row corresponds to a trial; the first column of each row
+% is the frame start number of a given trial, and the second column is a
+% string describing the trial condition.
+
+% 3) conditions - a C x 1 cell array of structs, where C is the number of
+% distinct trial conditions presented during throughout the course of the
+% trials to be analyzed. Each struct must have at least the following three
+% fields:
+
+%   a) Name - the name of the trial condition. This must exactly match the
+%   trial condition descriptions in the second column of trials, described
+%   above.
+
+%   b) Color - color code for the given condition, in any valid MATLAB
+%   format for encoding color. Will be used in plotting. 
+
+%   c) abbreviation - abbreviation for the given trial condition. Will be
+%   used in creating legends for each figure.
+
+% 4) preStimTime - amount of time before stimulus onset from which to plot data, in seconds.
+
+% 5) postStimTime - amount of time after stimulus onset from which to plot data, in seconds. 
+
+% 6) outputDirectory - directory where all created figures should be saved.
+
+
+% OUTPUTS:
+% This function has no formal return, but saves to disk 2 plots for each
+% ROI from the analyzed dataset:
+
+% 1) A plot with mean dF/F traces plus SEM bars for each condition, and
+% 2) A plot with dF/F traces for every individual trial, color-coded by condition
+
+
+% TODO:
+% 1) The framerate is currently hard-coded into this script. Framerate
+% should be read in dynamically from some parameters file.
+
+% 2) Stimulus duration is currently hard-coded into the script. This should
+% also be read in dynamically from somewhere else, like trials (although
+% trials currently only includes trial start frame and condition, not
+% duration, so this would entail changes to how the trial matrix is
+% created). In getting the trial duration from trials, one could also
+% verify that all trial durations are the same (which is the only situation
+% in which the shaded stimulus period rectangle makes sense).
+
+% 3) This function requires that the condition names in trials exactly
+% match the condition names in conditions. Should probably throw up an
+% error if this doesn't hold. 
+
+% 4) Maybe think about making the conditions input optional, as it's
+% probably really not necessary; it could just read out the trial
+% conditions from trials, then automatically assign colors and
+% abbreviations to each if none are specified in conditions.
+
+% 5) Perhaps make the outputDirectory argument optional, and have it
+% default to the current working directory.
+
+
+function plotPerCell(activity, trials, conditions, preStimTime, postStimTime, outputDirectory)
     %% Load data, spell out some basic parameters:
     
     % Imaging/trial parameters: currently hard-coded, need to get this dynamically
@@ -8,9 +94,9 @@ function plotPerCell(activity, trials, conditions, preStimS, postStimS, outputDi
     numROIs = size(activity, 1);
     numConditions = length(conditions);
     
-    preStim = ceil(preStimS * frameRate);
-    postStim = ceil(postStimS * frameRate);
-    periStimPeriod = preStim + postStim + 1;
+    preStimSamples = ceil(preStimTime * frameRate);
+    postStimSamples = ceil(postStimTime * frameRate);
+    periStimPeriod = preStimSamples + postStimSamples + 1;
     
     % Parse trials into TBC (for 'trials by condition'), a C x 2 matrix,
     % where C is the number of condition types. The first element of each
@@ -18,7 +104,7 @@ function plotPerCell(activity, trials, conditions, preStimS, postStimS, outputDi
     % P x D matrix, where N is the number of cells recorded in the current
     % acquisition, P is the number of samples to plot around each trial
     % onset, and D is the number of trials for the given condition.
-    TBC = trialsByCondition(activity, trials, conditions, preStim, postStim); 
+    TBC = trialsByCondition(activity, trials, conditions, preStimSamples, postStimSamples); 
     
     % Create a cell array that stores how many trials of each condition
     % were delivered (will be necessary for plot legends):
@@ -45,13 +131,13 @@ function plotPerCell(activity, trials, conditions, preStimS, postStimS, outputDi
     
     
     % Define some vectors that will be used for plotting shaded SEM areas:
-    domain = (1:1:preStim+postStim+1);
+    domain = (1:1:preStimSamples+postStimSamples+1);
     semX = [domain fliplr(domain)]; 
     
     
     % Define vectors that will be used for plotting shaded stim period
     % rectangle (recall, stim begins at index preStim + 1):
-    stimPeriod = [preStim+1 preStim+1+stimDur*frameRate];
+    stimPeriod = [preStimSamples+1 preStimSamples+1+stimDur*frameRate];
     
     
     % Compute appropriate x-tick coordinates (in data units) so that there
@@ -59,16 +145,16 @@ function plotPerCell(activity, trials, conditions, preStimS, postStimS, outputDi
     secPerTick = 2;
     samplesPerTick = frameRate*secPerTick;
     
-    nTicksBelowTrialStart = floor((preStim)/samplesPerTick);
-    ticksBelowTrialStart = (preStim+1) - fliplr(samplesPerTick*(0:1:nTicksBelowTrialStart));
+    nTicksBelowTrialStart = floor((preStimSamples)/samplesPerTick);
+    ticksBelowTrialStart = (preStimSamples+1) - fliplr(samplesPerTick*(0:1:nTicksBelowTrialStart));
 
-    nTicksAboveTrialStart = floor((postStim)/samplesPerTick);
-    ticksAboveTrialStart = (preStim+1) + samplesPerTick*(1:1:nTicksAboveTrialStart);
+    nTicksAboveTrialStart = floor((postStimSamples)/samplesPerTick);
+    ticksAboveTrialStart = (preStimSamples+1) + samplesPerTick*(1:1:nTicksAboveTrialStart);
 
     xticks = [ticksBelowTrialStart ticksAboveTrialStart];
     
     % Create cell array with appropriate labels for x-ticks:
-    labels = (xticks - (preStim+1))/frameRate;
+    labels = (xticks - (preStimSamples+1))/frameRate;
     labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
     
     
