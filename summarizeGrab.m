@@ -59,13 +59,15 @@
 % This function has no formal return, but saves the plots described above
 % for the given data acquisition session.
 
-function summarizeGrab(activity, trials, conditions, preStim, postStim, outputDirectory)
+%%
+function summarizeGrab(activityPath, trialsPath, conditions, preStim, postStim, outputDirectory)
     
     % Load activity data:
-    activity = csvread(activity);
+    activity = csvread(activityPath);
+    numROIs = size(activity,1);
     
     % Load trial data and strip header:
-    [n, t, trials] = xlsread(trials);
+    [n, t, trials] = xlsread(trialsPath);
     trials = trials(7:end, :);
     
     % Load condition settings:
@@ -77,6 +79,23 @@ function summarizeGrab(activity, trials, conditions, preStim, postStim, outputDi
     % trimmed data: 
     [activity, trials] = trimExp(activity, trials);
     
-    plotOverview(activity, trials, conditions, outputDirectory);
-    plotPerCell(activity, trials, conditions, preStim, postStim, outputDirectory);    
+    overviewPath = plotOverview(activity, trials, conditions, outputDirectory);
+    [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preStim, postStim, outputDirectory);    
+    
+    %% Write metadata:
+    
+    inputs = {{'activty traces', activityPath};
+              {'trial matrix', trialsPath};
+              {'conditions structure', conditions}};
+    params = {{'pre-stim period', preStim};
+              {'post-stim period', postStim}};
+    outputs = cell(1 + numROIs*2,1);
+    outputs{1} = {'overview figure', overviewPath};
+    
+    roiIndices = (1:1:numROIs)';
+    outputs(2:numROIs+1) = arrayfun(@(a) {strcat(['ROI ', num2str(a), ' mean traces figure']), meanPaths{a}} , roiIndices, 'UniformOutput', 0);
+    outputs(numROIs+2:numROIs*2 + 1) = arrayfun(@(a) {strcat(['ROI ', num2str(a), ' raw traces figure']), rawPaths{a}} , roiIndices, 'UniformOutput', 0);
+    %disp(outputs);
+    
+    writeMetadata('summarize_grab', 'summarize_grab', inputs, outputs, params);
 end
