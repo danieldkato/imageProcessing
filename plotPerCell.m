@@ -84,7 +84,8 @@
 % default to the current working directory.
 
 
-function plotPerCell(activity, trials, conditions, preStimTime, postStimTime, outputDirectory)
+%%
+function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preStimTime, postStimTime, outputDirectory)
     %% Load data, spell out some basic parameters:
     
     % Imaging/trial parameters: currently hard-coded, need to get this dynamically
@@ -129,6 +130,10 @@ function plotPerCell(activity, trials, conditions, preStimTime, postStimTime, ou
     end
     old = cd(outputDirectory);
     
+    % Create cell arrays that will contain full paths to created figures;
+    % will be returned to calling function
+    meanPaths = cell(numROIs, 1);
+    rawPaths = cell(numROIs, 1);
     
     % Define some vectors that will be used for plotting shaded SEM areas:
     domain = (1:1:preStimSamples+postStimSamples+1);
@@ -167,7 +172,7 @@ function plotPerCell(activity, trials, conditions, preStimTime, postStimTime, ou
     rawFig = figure(); % one for raw traces
     figures = {meanFig, rawFig};
     titles = {'mean', 'individual'};
-    
+    outputs = {meanPaths, rawPaths};
         
     % For each ROI, create 2 figures: 
     % 1) a figure plotting mean traces (with SEM bars) for each condition
@@ -209,7 +214,7 @@ function plotPerCell(activity, trials, conditions, preStimTime, postStimTime, ou
         legend(rawPlotHandles, legText);
         legend('boxoff');
         
-        % Format both figures for current ROI:
+        % For both figures for the current ROI, format properly and save:
         for f = 1:length(figures)
             
             % Draw a rectangle covering the stimulus period:
@@ -238,7 +243,24 @@ function plotPerCell(activity, trials, conditions, preStimTime, postStimTime, ou
             xlim([1 periStimPeriod]);
             
             % Save figure:
-            saveas(gcf, strcat(['ROI', num2str(r), '_', titles{f}, '_traces']));
+            if r < 10
+                numStr = strcat(['00', num2str(r)]);
+            elseif r >=10 && r <100
+                numStr = strcat(['0', num2str(r)]);
+            elseif r>100
+                numStr = num2str(r);
+            end
+            
+            titleStr = strcat(['ROI_', numStr, '_', titles{f}, '_traces']);
+            saveas(gcf, titleStr);
+            %disp(fullfile(outputDirectory, titleStr));
+            %outputs{f}{r} = fullfile(outputDirectory, titleStr);
+            
+            if mod(f,2) == 0
+                rawPaths{r} = fullfile(outputDirectory, titleStr);
+            else
+                meanPaths{r} = fullfile(outputDirectory, titleStr);
+            end
             
             % Clear figure for the next ROI:
             clf(gcf)
