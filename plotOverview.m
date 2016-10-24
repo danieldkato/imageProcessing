@@ -27,8 +27,7 @@
 
 
 % OUTPUTS:
-% This function currently has no formal return, but creates the plot
-% described above, which can then be saved to disk.
+% 1) figPath - full path to the created figure.
 
 
 % TODO:
@@ -43,8 +42,9 @@
 % 3) Think about making conditions optional in case someone just wants
 % traces
 
+
 %%
-function plotOverview(activity, trials, conditions, outputDirectory)
+function figPath = plotOverview(activity, trials, conditions, outputDirectory)
     %% Plot dF/F traces:
     numROIs = size(activity,1);
     numFrames = size(activity,2);
@@ -115,8 +115,8 @@ function plotOverview(activity, trials, conditions, outputDirectory)
     
     old = cd(outputDirectory);
     
-    titleStr = strcat(['grab_overview']);
-    saveas(gcf, titleStr, 'fig');
+    figPath = fullfile(outputDirectory, 'grab_overview.fig');
+    saveas(gcf, figPath, 'fig');
     close;
     
     cd(old);
