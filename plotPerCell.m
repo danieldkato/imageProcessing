@@ -296,6 +296,4 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preSt
         %}
     end
     
-    cd(old);
-    
 end
