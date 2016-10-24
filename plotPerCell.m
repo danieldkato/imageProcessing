@@ -52,11 +52,17 @@
 
 
 % OUTPUTS:
-% This function has no formal return, but saves to disk 2 plots for each
-% ROI from the analyzed dataset:
+% This function saves to disk 2 plots for each ROI from the analyzed
+% dataset:
 
 % 1) A plot with mean dF/F traces plus SEM bars for each condition, and
 % 2) A plot with dF/F traces for every individual trial, color-coded by condition
+
+% In addition, this function formally returns:
+% 1) meanPaths - an N x 1 cell array of strings containing full paths to
+% the saved mean dF/F figures, and 
+% 2) rawPaths - an N x 1 cell array of strings containing full paths to the
+% saved individual trial dF/F figures. 
 
 
 % TODO:
