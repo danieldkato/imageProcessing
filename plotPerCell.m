@@ -91,22 +91,25 @@
 
 
 %%
-function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, postStimTime, outputDirectory, conditionSettings)
+function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, postStimTime, outputDirectory, grabMetadata, conditionSettings)
     %% Load data, spell out some basic parameters:
-    
-    % Imaging/trial parameters: currently hard-coded, need to get this dynamically
-    frameRate = 3.37; % Hz 
-    stimDur = 2;  % seconds
-
-    % Convert peri-stimulus period from seconds to samples:
-    preStimSamples = ceil(preStimTime * frameRate);
-    postStimSamples = ceil(postStimTime * frameRate);
-    periStimPeriod = preStimSamples + postStimSamples + 1;
        
+    stimDur = 2; % this needs to be found dynamically
+    
+    % Load grab metadata if available:
+    fid2 = fopen(grabMetadata);
+    grabMeta = fscanf(fid2, '%c');
+    eval(grabMeta);
+    
     % Load condition settings if available:
-    fid = fopen(conditionSettings);
-    settings = fscanf(fid, '%c');
-    eval(settings);
+    fid2 = fopen(conditionSettings);
+    condsettings = fscanf(fid2, '%c');
+    eval(condsettings);
+    
+    % Convert peri-stimulus period from seconds to samples:
+    preStimSamples = ceil(preStimTime * frame_rate);
+    postStimSamples = ceil(postStimTime * frame_rate);
+    periStimPeriod = preStimSamples + postStimSamples + 1;
    
     % For convenience and human readability:
     numROIs = size(activity, 1);
@@ -119,8 +122,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, post
     % acquisition, P is the number of samples to plot around each trial
     % onset, and D is the number of trials for the given condition.
     TBC = trialsByCondition(activity, trials, Conditions, preStimSamples, postStimSamples); 
-    disp('TBC');
-    disp(TBC);
     
     % Create a cell array that stores how many trials of each condition
     % were delivered (will be necessary for plot legends):
@@ -131,8 +132,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, post
     
     % For each condition, get an N x P means matrix
     means = cellfun(@(c) mean(c, 3), TBC(:,2), 'UniformOutput', 0);
-    disp('means');
-    disp(means);
     
     % For each condition, get an N x P standard error of the mean matrix
     SEM = cellfun(@(c) std(c,0,3)/sqrt(size(c,3)), TBC(:,2), 'UniformOutput', 0);
@@ -147,35 +146,29 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, post
     end
     old = cd(outputDirectory);
     
-    % Create cell arrays that will contain full paths to created figures;
-    % will be returned to calling function
+    % Create cell arrays that will contain full paths to created figures; these will be returned to calling function:
     meanPaths = cell(numROIs, 1);
     rawPaths = cell(numROIs, 1);
+    
+    % Compute appropriate x-tick coordinates (in data units) so that there is one tick at stimulus onset and ticks marks every 2 sec:
+    secPerTick = 2;     samplesPerTick = frame_rate*secPerTick;
+    nTicksBelowTrialStart = floor((preStimSamples)/samplesPerTick);     ticksBelowTrialStart = (preStimSamples+1) - fliplr(samplesPerTick*(0:1:nTicksBelowTrialStart));
+    nTicksAboveTrialStart = floor((postStimSamples)/samplesPerTick);    ticksAboveTrialStart = (preStimSamples+1) + samplesPerTick*(1:1:nTicksAboveTrialStart);
+    xticks = [ticksBelowTrialStart ticksAboveTrialStart];
+    
+    % Write x-tick labels into a cell array:
+    labels = (xticks - (preStimSamples+1))/frame_rate;
+    labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
+     
+    % Write legend text into a cell array:
+    legText = cellfun(@(c, d) strcat([c.Abbreviation, ', n=', num2str(d)]), Conditions, numTrialsPerC, 'UniformOutput', 0);
     
     % Define some vectors that will be used for plotting shaded SEM areas:
     domain = (1:1:preStimSamples+postStimSamples+1);
     semX = [domain fliplr(domain)]; 
     
-    % Define vectors that will be used for plotting shaded stim period
-    % rectangle (recall, stim begins at index preStim + 1):
-    stimPeriod = [preStimSamples+1 preStimSamples+1+stimDur*frameRate];
-    
-    % Compute appropriate x-tick coordinates (in data units) so that there
-    % is one tick at stimulus onset and ticks marks every 2 sec
-    secPerTick = 2;
-    samplesPerTick = frameRate*secPerTick;
-    nTicksBelowTrialStart = floor((preStimSamples)/samplesPerTick);
-    ticksBelowTrialStart = (preStimSamples+1) - fliplr(samplesPerTick*(0:1:nTicksBelowTrialStart));
-    nTicksAboveTrialStart = floor((postStimSamples)/samplesPerTick);
-    ticksAboveTrialStart = (preStimSamples+1) + samplesPerTick*(1:1:nTicksAboveTrialStart);
-    xticks = [ticksBelowTrialStart ticksAboveTrialStart];
-    
-    % Create cell array with appropriate labels for x-ticks:
-    labels = (xticks - (preStimSamples+1))/frameRate;
-    labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
-     
-    % Create legend text:
-    legText = cellfun(@(c, d) strcat([c.Abbreviation, ', n=', num2str(d)]), Conditions, numTrialsPerC, 'UniformOutput', 0);
+    % Define vectors that will be used for plotting shaded stim period rectangle (recall, stim begins at index preStim + 1):
+    stimPeriod = [preStimSamples+1 preStimSamples+1+stimDur*frame_rate];
     
     % Create figure windows (these will be erased then reused between ROIs):
     meanFig = figure(); % one for mean traces
@@ -264,8 +257,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, post
             
             titleStr = strcat(['ROI_', numStr, '_', titles{f}, '_traces']);
             saveas(gcf, titleStr);
-            %disp(fullfile(outputDirectory, titleStr));
-            %outputs{f}{r} = fullfile(outputDirectory, titleStr);
             
             if mod(f,2) == 0
                 rawPaths{r} = fullfile(outputDirectory, titleStr);
@@ -276,29 +267,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, post
             % Clear figure for the next ROI:
             clf(gcf)
         end
-        
-        %{
-        % Print title, label axes:
-        figure(meanFig);
-        title(strcat(['ROI #', num2str(r), ' mean dF/F traces by condition']));
-        
-        figure(rawFig);
-        title(strcat(['ROI #', num2str(r), ' individual dF/F traces by condition']));
-
-        
-        % Save figure:
-        figure(meanFig);
-        titleStr = strcat(['ROI', num2str(r), '_mean_activity']);
-        saveas(gcf, titleStr, 'fig');
-        
-        figure(rawFig);
-        titleStr = strcat(['ROI', num2str(r), '_individual_traces']);
-        saveas(gcf, titleStr, 'fig');
-        
-       
-        clf(meanFig);
-        clf(rawFig);
-        %}
     end
     
 end

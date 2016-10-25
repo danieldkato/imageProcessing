@@ -60,7 +60,7 @@
 % for the given data acquisition session.
 
 %%
-function summarizeGrab(activityPath, trialsPath, preStim, postStim, outputDirectory, conditions)
+function summarizeGrab(activityPath, trialsPath, preStim, postStim, outputDirectory, grabMetadata, conditions)
     
     % Load activity data:
     activity = csvread(activityPath);
@@ -82,7 +82,7 @@ function summarizeGrab(activityPath, trialsPath, preStim, postStim, outputDirect
     [activity, trials] = trimExp(activity, trials);
     
     %overviewPath = plotOverview(activity, trials, conditions, outputDirectory);
-    [meanPaths, rawPaths] = plotPerCell(activity, trials, preStim, postStim, outputDirectory, conditions);    
+    [meanPaths, rawPaths] = plotPerCell(activity, trials, preStim, postStim, outputDirectory, grabMetadata, conditions);    
     
     %% Write metadata:
     
