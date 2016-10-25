@@ -60,7 +60,7 @@
 % for the given data acquisition session.
 
 %%
-function summarizeGrab(activityPath, trialsPath, conditions, preStim, postStim, outputDirectory)
+function summarizeGrab(activityPath, trialsPath, preStim, postStim, outputDirectory, conditions)
     
     % Load activity data:
     activity = csvread(activityPath);
@@ -70,8 +70,10 @@ function summarizeGrab(activityPath, trialsPath, conditions, preStim, postStim, 
     [n, t, trials] = xlsread(trialsPath);
     trials = trials(7:end, :);
     
+    %{
     % Load condition settings:
     conditions = importdata(conditions);
+    %}
     
     % Trim flanking NaN columns from boxcar-averaged dF/F data, discard any
     % trials that occur during frames corresponding to NaN columns, apply
@@ -79,8 +81,8 @@ function summarizeGrab(activityPath, trialsPath, conditions, preStim, postStim, 
     % trimmed data: 
     [activity, trials] = trimExp(activity, trials);
     
-    overviewPath = plotOverview(activity, trials, conditions, outputDirectory);
-    [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preStim, postStim, outputDirectory);    
+    %overviewPath = plotOverview(activity, trials, conditions, outputDirectory);
+    [meanPaths, rawPaths] = plotPerCell(activity, trials, preStim, postStim, outputDirectory, conditions);    
     
     %% Write metadata:
     

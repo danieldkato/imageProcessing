@@ -91,27 +91,36 @@
 
 
 %%
-function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preStimTime, postStimTime, outputDirectory)
+function [meanPaths, rawPaths] = plotPerCell(activity, trials, preStimTime, postStimTime, outputDirectory, conditionSettings)
     %% Load data, spell out some basic parameters:
     
     % Imaging/trial parameters: currently hard-coded, need to get this dynamically
     frameRate = 3.37; % Hz 
     stimDur = 2;  % seconds
-    
-    numROIs = size(activity, 1);
-    numConditions = length(conditions);
-    
+
+    % Convert peri-stimulus period from seconds to samples:
     preStimSamples = ceil(preStimTime * frameRate);
     postStimSamples = ceil(postStimTime * frameRate);
     periStimPeriod = preStimSamples + postStimSamples + 1;
-    
+       
+    % Load condition settings if available:
+    fid = fopen(conditionSettings);
+    settings = fscanf(fid, '%c');
+    eval(settings);
+   
+    % For convenience and human readability:
+    numROIs = size(activity, 1);
+    numConditions = length(Conditions);
+
     % Parse trials into TBC (for 'trials by condition'), a C x 2 matrix,
     % where C is the number of condition types. The first element of each
     % row is a condition name, and the second element of each row is an N x
     % P x D matrix, where N is the number of cells recorded in the current
     % acquisition, P is the number of samples to plot around each trial
     % onset, and D is the number of trials for the given condition.
-    TBC = trialsByCondition(activity, trials, conditions, preStimSamples, postStimSamples); 
+    TBC = trialsByCondition(activity, trials, Conditions, preStimSamples, postStimSamples); 
+    disp('TBC');
+    disp(TBC);
     
     % Create a cell array that stores how many trials of each condition
     % were delivered (will be necessary for plot legends):
@@ -122,6 +131,8 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preSt
     
     % For each condition, get an N x P means matrix
     means = cellfun(@(c) mean(c, 3), TBC(:,2), 'UniformOutput', 0);
+    disp('means');
+    disp(means);
     
     % For each condition, get an N x P standard error of the mean matrix
     SEM = cellfun(@(c) std(c,0,3)/sqrt(size(c,3)), TBC(:,2), 'UniformOutput', 0);
@@ -145,33 +156,26 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preSt
     domain = (1:1:preStimSamples+postStimSamples+1);
     semX = [domain fliplr(domain)]; 
     
-    
     % Define vectors that will be used for plotting shaded stim period
     % rectangle (recall, stim begins at index preStim + 1):
     stimPeriod = [preStimSamples+1 preStimSamples+1+stimDur*frameRate];
-    
     
     % Compute appropriate x-tick coordinates (in data units) so that there
     % is one tick at stimulus onset and ticks marks every 2 sec
     secPerTick = 2;
     samplesPerTick = frameRate*secPerTick;
-    
     nTicksBelowTrialStart = floor((preStimSamples)/samplesPerTick);
     ticksBelowTrialStart = (preStimSamples+1) - fliplr(samplesPerTick*(0:1:nTicksBelowTrialStart));
-
     nTicksAboveTrialStart = floor((postStimSamples)/samplesPerTick);
     ticksAboveTrialStart = (preStimSamples+1) + samplesPerTick*(1:1:nTicksAboveTrialStart);
-
     xticks = [ticksBelowTrialStart ticksAboveTrialStart];
     
     % Create cell array with appropriate labels for x-ticks:
     labels = (xticks - (preStimSamples+1))/frameRate;
     labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
-    
-    
+     
     % Create legend text:
-    legText = cellfun(@(c, d) strcat([c.abbreviation, ', n=', num2str(d)]), conditions, numTrialsPerC, 'UniformOutput', 0);
-
+    legText = cellfun(@(c, d) strcat([c.Abbreviation, ', n=', num2str(d)]), Conditions, numTrialsPerC, 'UniformOutput', 0);
     
     % Create figure windows (these will be erased then reused between ROIs):
     meanFig = figure(); % one for mean traces
@@ -195,19 +199,19 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preSt
             % Plot mean of current condition for current ROI:
             figure(meanFig);
             hold on;
-            meanPlotHandles(c) = plot(means{c}(r,:), 'Color', conditions{c}.Color, 'LineWidth', 1.25, 'DisplayName', conditions{c}.Name);
+            meanPlotHandles(c) = plot(means{c}(r,:), 'Color', Conditions{c}.Color, 'LineWidth', 1.25, 'DisplayName', Conditions{c}.Name);
             
             % Plot SEM bars of current condition for current ROI:
             semOver = [means{c}(r,:) fliplr( means{c}(r,:) + SEM{c}(r,:) )];
             semUnder = [means{c}(r,:) fliplr( means{c}(r,:) - SEM{c}(r,:) )];
-            semOverPatch = patch(semX, semOver, conditions{c}.Color, 'EdgeColor', 'none', 'FaceAlpha', 0.1, 'EdgeAlpha', 0.1);
-            semUnderPatch = patch(semX, semUnder, conditions{c}.Color, 'EdgeColor', 'none', 'FaceAlpha', 0.1, 'EdgeAlpha', 0.1);
+            semOverPatch = patch(semX, semOver, Conditions{c}.Color, 'EdgeColor', 'none', 'FaceAlpha', 0.2, 'EdgeAlpha', 0.2);
+            semUnderPatch = patch(semX, semUnder, Conditions{c}.Color, 'EdgeColor', 'none', 'FaceAlpha', 0.2, 'EdgeAlpha', 0.2);
             
             % Plot traces for every individual trial of current condition for current ROI:
             figure(rawFig);
             hold on;
             currROIallTraces = reshape(TBC{c,2}(r,:,:), numTrialsPerC{c}, periStimPeriod);
-            h = plot(currROIallTraces', 'Color', conditions{c}.Color);
+            h = plot(currROIallTraces', 'Color', Conditions{c}.Color);
             rawPlotHandles(c) = h(1);
         end
         
@@ -220,7 +224,7 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preSt
         legend(rawPlotHandles, legText);
         legend('boxoff');
         
-        % For both figures for the current ROI, format properly and save:
+        % Format and save mean and individual trace figures for the current ROI:
         for f = 1:length(figures)
             
             % Draw a rectangle covering the stimulus period:
@@ -228,7 +232,8 @@ function [meanPaths, rawPaths] = plotPerCell(activity, trials, conditions, preSt
             hold on;
             yl = ylim;
             recY = [yl fliplr(yl)];
-            h = fill([stimPeriod(1) stimPeriod(1) stimPeriod(2) stimPeriod(2)], recY, 'b', 'FaceAlpha', 0.1, 'EdgeAlpha', 0.1);
+            %h = fill([stimPeriod(1) stimPeriod(1) stimPeriod(2) stimPeriod(2)], recY, [0.01 0.01 0.01], 'FaceAlpha', 0.1, 'EdgeAlpha', 0.1);
+            p = patch([stimPeriod(1) stimPeriod(1) stimPeriod(2) stimPeriod(2)], recY, [0.75 0.75 0.75], 'FaceAlpha', 0.1, 'EdgeColor', 'none');
             uistack(h, 'bottom');
             ylim(yl);
             
