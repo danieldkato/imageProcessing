@@ -34,9 +34,11 @@
 % 1) tracesOut - K x F activity matrix where K is the number of ROIs in the
 % grab and F is the number of non-NaN columns in tracesIn.
 
-% 2) startOffset - index of the first non-NaN column of tracesIn.
+% 2) startOffset - index of the first non-NaN column of tracesIn. This will
+% be an empty array if there are no initial flanking NaN columns.
 
-% 3) stopOffset - index of the last non-NaN column of tracesIn. 
+% 3) stopOffset - index of the last non-NaN column of tracesIn. This will
+% be an empty array if there are no final flanking NaN columns. 
 
 %%
 function [tracesOut, startOffset, stopOffset] = trimNaNs(tracesIn)
