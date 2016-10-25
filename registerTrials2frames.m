@@ -62,6 +62,30 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
         showInflectionPoints = 0;
     end
     
+    %% Read grab and galvo metadata files to get the necessary data acquisition parameters:
+    
+    % Read image grab metadata to get framerate:
+    [grabDir, nm, ext] = fileparts(grabPath); 
+    list = dir(grabDir);
+    grabMeta = list(arrayfun(@(a) strcmp(a.name, 'meta.txt'), list));
+    
+    if length(grabMeta) == 0
+        error('Metadata file for grab not found; make sure that meta.txt is located in the same directory as raw multi-page TIFF.');
+    else
+        grabMetaFid = fopen(grabMeta(1).name);
+        eval(fscanf(grabMetaFid, '%c'));
+        
+        if exist('frame_rate', 'var') == 0
+            error('Frame rate not found; make sure that grab metadata file includes line ''frame_rate = <f>'', where <f> stands for frame rate in Hz.');
+        end
+    end
+    
+    % Read galvo metadata to get sample rate:
+    galvoFid = fopen(galvoPath, 'r', 'b');
+    [headerSize, header] = SkipHeader(galvoFid);
+    sampleRate = str2double(header{7}(18:end));
+    
+    
     
     %% Load data:
     galvoTrace = readContinuousDAT(galvoPath); % Load the galvanometer data from the raw .dat file into an s x 1 vector, where s is number of samples taken during grab 
@@ -74,10 +98,8 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     % Frame start times correspond to local minima in the sawtooth pattern
     % of the galvanometer trace; these can be found using the LocalMinima
     % function.
-    
-    frameRate = 3.37; % Frames per second; this is a constant for now, but I should think about how to make this get the frame rate at runtime
-    framePeriod = 1/frameRate;
-    sampleRate = 16000; % Samples per second; Also a constant for now, but I should think about how to make this get the sample rate at runtime
+
+    framePeriod = 1/frame_rate;
     minDistanceGalvo = framePeriod * sampleRate; % The function LocalMinima will include only the lowest of any local minima found within this many samples of each other
     minDistanceGalvo = minDistanceGalvo * .9;
     galvoThreshold = -1.6; % Whatever units gavloTrace is expressed in (Volts, I think); the function LocalMinima will exclude any local minima higher than this value; for the time being, I just got this from eyeballing a sample galvo trace, but I may ultimately need more sophisticated ways of getting this if there's any variability
@@ -88,7 +110,6 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     % handy just to double check that reasonable parameters for LocalMinima
     % have been chosen, but may be cumbersome if processing large batches
     % of data
-    
     if showInflectionPoints == 1
         figure;
         plot(galvoTrace);
@@ -107,6 +128,7 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     minITI = 3; % Seconds; again, it would be better if there were a way to do this dynamically
     minDistanceTimer = minITI * sampleRate;
     timerThreshold = -4; % timerTrace units (Volts, I think); again, should think of a way to get this dynamically
+    
     trialOnsetSamples = LocalMinima(-timerTrace, minDistanceTimer, timerThreshold);
     
     if showInflectionPoints == 1
@@ -126,7 +148,7 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     % highest sample number corresponding to a frame start time below it
     for i = 1:length(trialStartFrames)
         [M, I] = max(frameOnsetSamples( frameOnsetSamples <= trialOnsetSamples(i) ));
-        trialStartFrames{i} = I;
+        trialStartFrames{i} = I + 1; % have to add 1 because there's one frame that completes before the first local minimum
     end
 
     
@@ -140,6 +162,11 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     
     
     %% Write trialMatrix to a .csv 
+    status = exist(outputPath);
+    if status == 0
+        mkdir(outputPath);
+    end
+    
     filename = fullfile(outputPath, 'trialMatrix.csv');
     fileID = fopen(filename, 'w');
     %fileID = fopen('trialMatrix.csv', 'w');
