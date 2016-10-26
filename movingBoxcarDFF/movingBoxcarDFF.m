@@ -29,7 +29,7 @@
 % disk as a K x (T-pre-post) .csv for use in subsequent processing steps.
 
 %%
-function dFF = movingBoxcarDFF(input, m, n, output)
+function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir, Conditions)
     dat = csvread(input); % Load the data
     numROIs = size(dat, 1);
     numFrames = size(dat, 2);
@@ -60,21 +60,38 @@ function dFF = movingBoxcarDFF(input, m, n, output)
     % order to perform the moving boxcar averaging. We can do this by
     % padding dFF with m columns of NaNs before the dFF data and n columns
     % of NaNs after the dFF data.
-    dFF = [NaN(numROIs, m), dFF, NaN(numROIs, n)];
+    dFFpadded = [NaN(numROIs, m), dFF, NaN(numROIs, n)];
     
-    % Save the outputs to disk:
+    
+    %% Parse the data into individual trials, and organize by condition:
+    TBC = trialsByCondition(dFF, Trials, preStim, postStim, Conditions);
+    
+    
+    %% Save the outputs to disk:
     status = exist(output, 'dir');
     if status == 0
         mkdir(output);
     end 
+
+    old = cd(outputDir);
     
-    old = cd(output);
-    csvwrite('dFF.csv', dFF);
+    % Create and save files containing full trace dataset:
+    csvwrite('dFF.csv', dFF); % create a .csv for easy manual inspection
+    h5create('dFF_full_traces.h5', '/fullActivityTraces', size(dFFpadded)); % create an HDF5 in case this is useful later on
+    h5create('dFF_full_traces.h5', '/fullActivityTraces', dFFpadded);
+
+    % Create a separate HDF5 file for data parsed into individual trials, organized into one dataset per condition:
+    for c = 1:length(TBC)
+        dSetName = strcat(['/', TBC{c,1}]);
+        h5create('dFF_parsed_trials.h5', dSetName, size(TBC{c,2}));
+        h5write('dFF_parsed_trials.h5', dSetName, TBC{c,2});
+    end
+
     
     %% Write metadata:
     
     inputs = {{'raw intensity traces', input}};
-    outputs = {{'dF/F traces', output}};
+    outputs = {{'dF/F traces', outputDir}};
     params = {{'pre', m};
               {'post', n}};
     
