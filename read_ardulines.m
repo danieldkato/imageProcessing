@@ -33,39 +33,91 @@
 % worthwhile building more flexibility into this function. s
 
 %%
-function trialTypes = read_ardulines(input)
-    fileID = fopen(input);
-    C = textscan(fileID, '%s', 'Delimiter', '\r\n');
-    C = C{1,1};
-    fclose(fileID);
-
-    last = @(x) x(end);
-
-    trialStartRegex = 'TRL_[1-9]*_START';
-    trialStarting = ~cellfun(@isempty, regexp(C,trialStartRegex));
-    trialStartLines = find(trialStarting);
-
-    stprExp = 'TRLP STPRIDX';
-    isStprLine = ~cellfun(@isempty, regexp(C, stprExp));
-    stprLines = C(find(isStprLine));
-    stprVals = str2num(cellfun(last, stprLines));
-
-    spkrExp = 'TRLP SPKRIDX';
-    isSpkrLine = ~cellfun(@isempty, regexp(C, spkrExp));
-    spkrLines = C(find(isSpkrLine));
-    spkrVals = str2num(cellfun(last, spkrLines));
-
-    trialTypes = cell(min([length(stprVals), length(spkrVals)]), 1);
-
-    for i = 1:length(trialTypes)
-        if stprVals(i) == 0 && spkrVals(i) == 0
-            trialTypes{i} = 'none';
-        elseif stprVals(i) == 1 && spkrVals(i) == 0
-            trialTypes{i} = 'stepper only';
-        elseif stprVals(i) == 0 && spkrVals(i) == 1
-            trialTypes{i} = 'speaker only';
-        elseif stprVals(i) == 1 && spkrVals(i) == 1
-            trialTypes{i} = 'stepper and speaker';
+function T = read_ardulines(lines, conditionSettings)
+    
+    % Load data into an k x 1 cell array, where k is the number of lines:
+    linesFID = fopen(lines);
+    L = textscan(linesFID, '%s', 'Delimiter', '\r\n');
+    fclose(linesFID);
+    L = L{1,1};
+    L = L(~cellfun(@isempty, L)); % For some reason L includes some empty lines; not sure why, but strip these
+    
+    % Load a structure containing information about the conditions we're looking for:
+    condsFID = fopen(conditionSettings);
+    content = fscanf(condsFID, '%c');
+    eval(content);
+    
+    % (Might eventually want to include some code here to ensure that each line begins with a number)
+    
+    % Find all trial start lines:
+    startLineNumbers = find(~cellfun(@isempty, regexp(L, 'TRL_[0-9]*_START')));
+    
+    % Initialize a t x 2 cell array, where t is the number of trials, to be returned to the calling function:
+    T = cell(length(startLineNumbers), 2);
+    
+    % Determine the condition of each trial:
+    for t = 1:length(startLineNumbers)
+        
+        % Get all lines associated with the current trial:
+        if t < length(startLineNumbers)
+            rangeEnd = startLineNumbers(t+1) - 1;
+        elseif t == length(startLineNumbers)
+            rangeEnd = length(L);
         end
+        currTrialLines = L(startLineNumbers(t):rangeEnd);
+        
+        % Extract trial parameter lines for current trial:
+        trlpLines = currTrialLines(~cellfun(@isempty, regexp(currTrialLines, 'TRLP')));
+        
+        % Make a cell array of current trial parameters:
+        currTrlParams = cell(length(trlpLines), 2);
+        for p = 1:length(currTrlParams)
+           [trlp1, trlpEnd] = regexp(trlpLines{p}, 'TRLP [A-Z]+');
+           currTrlParams{p, 1} = trlpLines{p}(trlp1+5:trlpEnd); % parameter name
+           currTrlParams{p, 2} = str2double(trlpLines{p}(trlpEnd+2:end)); % parameter value
+        end 
+        
+        % For each possible condition, check if the defining parameters match the known parameters of the current trial:
+        for c = 1:length(Conditions)
+            
+            nParamsCompared = 0;
+            nParamsMatching = 0;
+            
+            fNames = fieldnames(Conditions{c});
+            
+            % Go through each parameter for the current possible condition under consideration...
+            for n = 1:length(fNames)
+                
+                % ... and see if that parameter is specified for the current trial:
+                hit = cellfun(@(c) strcmp(fNames{n}, c), currTrlParams(:,1));
+                
+                % If so:
+                if any(hit) 
+                    nParamsCompared = nParamsCompared+1; 
+                    disp(eval(strcat('Conditions{',num2str(c),'}.',fNames{n})));
+                    if currTrlParams{hit,2} == eval(strcat('Conditions{',num2str(c),'}.',fNames{n}))
+                        nParamsMatching = nParamsMatching + 1;
+                    end
+                end
+            end
+            
+            % If all compared parameters match:
+            if nParamsMatching/nParamsCompared == 1
+                
+                % Write the name of the matched condition into T{t,1}, where t is the current trial number:
+                T{t,1} = Conditions{c}.Name;
+                
+                % Try to get the trial duration:
+                durInd = cellfun(@(c) strcmp('STIMDUR', c), currTrlParams(:,1));
+                if any(durInd)
+                    T{t,2} = currTrlParams{durInd, 2};
+                end
+                
+                break
+                
+            end
+            
+        end
+        
     end
 end

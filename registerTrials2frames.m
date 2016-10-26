@@ -56,82 +56,97 @@
 % This function also saves the output matrix as a .csv for future
 % processing, along with metadata about the registration itself.
 
-function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, outputPath, grabPath, showInflectionPoints)
-    
-    if nargin<6
-        showInflectionPoints = 0;
-    end
-    
-    %% Read grab and galvo metadata files to get the necessary data acquisition parameters:
+
+%%
+function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, grabPath, conditionSettings, outputPath, showInflectionPoints)
+    %% Read image grab and galvo metadata files to get the necessary data acquisition parameters:
     
     % Read image grab metadata to get framerate:
-    [grabDir, nm, ext] = fileparts(grabPath); 
+    [grabDir, nm, ext] = fileparts(grabPath);
     list = dir(grabDir);
-    grabMeta = list(arrayfun(@(a) strcmp(a.name, 'meta.txt'), list));
+    grabMeta = list(arrayfun(@(a) strcmp(a.name, 'meta.txt'), list)); % look for a file called 'meta.txt' in the same directory as the raw grab file
     
+    % Raise an error if meta.txt is not found:
     if length(grabMeta) == 0
         error('Metadata file for grab not found; make sure that meta.txt is located in the same directory as raw multi-page TIFF.');
     else
-        grabMetaFid = fopen(grabMeta(1).name);
-        eval(fscanf(grabMetaFid, '%c'));
+        disp('grabMeta(1).name');
+        disp(grabMeta(1).name);
+        grabMetaFid = fopen(fullfile(grabDir, grabMeta(1).name), 'r');
+        disp('grabMetaFid');
+        disp(grabMetaFid);
+        content = fscanf(grabMetaFid, '%c');
+        eval(content);
         
+        % Raise an error if meta.txt does not contain a variable called frame_rate:
         if exist('frame_rate', 'var') == 0
             error('Frame rate not found; make sure that grab metadata file includes line ''frame_rate = <f>'', where <f> stands for frame rate in Hz.');
         end
+        
     end
     
-    % Read galvo metadata to get sample rate:
+    % Read galvo header to get sample rate:
     galvoFid = fopen(galvoPath, 'r', 'b');
     [headerSize, header] = SkipHeader(galvoFid);
     sampleRate = str2double(header{7}(18:end));
     
     
+    %% Set output display parameters:
+    if nargin< 6
+        showInflectionPoints = 0;
+    end
     
-    %% Load data:
+    if nargin < 5
+        outputPath = cd;
+    end
+    
+    
+    %% Load galvo, timer and Arduino data:
     galvoTrace = readContinuousDAT(galvoPath); % Load the galvanometer data from the raw .dat file into an s x 1 vector, where s is number of samples taken during grab 
     timerTrace = readContinuousDAT(timerPath); % Load the trial timer data from the raw .dat file into an s x 1 vector, where s is the number of samples taken during a grab
-    trialTypes = read_ardulines(ardulines); %% Get an ordered list of trial types from arudlines
+    trialTypes = read_ardulines(ardulines, conditionSettings); %% Get an ordered list of trial types from arudlines
     
     
-    %% Get the start time of every frame (in terms an index into the galvanometer trace)
+    %% Get the start time of every frame, in terms an index into the galvanometer trace:
     
-    % Frame start times correspond to local minima in the sawtooth pattern
-    % of the galvanometer trace; these can be found using the LocalMinima
-    % function.
-
+    % Compute some input parameters for LocalMinima, called below:
     framePeriod = 1/frame_rate;
     minDistanceGalvo = framePeriod * sampleRate; % The function LocalMinima will include only the lowest of any local minima found within this many samples of each other
-    minDistanceGalvo = minDistanceGalvo * .9;
+    minDistanceGalvo = minDistanceGalvo * .9; % Fudge factor; the true number of samples between certain pairs of frame-start times is slightly less than the theoretical value
     galvoThreshold = -1.6; % Whatever units gavloTrace is expressed in (Volts, I think); the function LocalMinima will exclude any local minima higher than this value; for the time being, I just got this from eyeballing a sample galvo trace, but I may ultimately need more sophisticated ways of getting this if there's any variability
     
-    frameOnsetSamples = LocalMinima(galvoTrace, minDistanceGalvo, galvoThreshold); %returns a vector of indices into the input trace
-    
-    % Plot the local minima on top the galvo trace if desired; this can be
-    % handy just to double check that reasonable parameters for LocalMinima
-    % have been chosen, but may be cumbersome if processing large batches
-    % of data
-    if showInflectionPoints == 1
-        figure;
-        plot(galvoTrace);
-        hold on;
-        t = (1:1:length(galvoTrace));
-        plot(t(frameOnsetSamples), galvoTrace(frameOnsetSamples), 'r.');
-    end 
+    % Get a vector of every galvo signal sample at which a frame begins:
+    frameOnsetSamples = LocalMinima(galvoTrace, minDistanceGalvo, galvoThreshold);
     
     
-    %% Get the start time of every trial (in terms of an index into the trial timer signal trace)
+    %% Get the start time of every trial, in terms of an index into the trial timer signal trace:
     
     % Get every sample index in timerTrace corresponding to the onset of a
     % new trial; trial onsets are indicated by local maxima, so run
     % LocalMinima on -trialTrace:
     
+    % Compute some parameters for LocalMinima, called below:
     minITI = 3; % Seconds; again, it would be better if there were a way to do this dynamically
     minDistanceTimer = minITI * sampleRate;
-    timerThreshold = -4; % timerTrace units (Volts, I think); again, should think of a way to get this dynamically
+    timerThreshold = -4; % timerTrace units (Volts, I think); I just eyeballed this for now, but I should probably find a way to get this dynamically.
     
+    % Get a vector of every timer signal sample at which a trial begins: 
     trialOnsetSamples = LocalMinima(-timerTrace, minDistanceTimer, timerThreshold);
     
+    
+    %% Show traces if requested by user:
+    
+    % Plot the local minima on top the galvo trace if desired; this can be
+    % handy just to double check that reasonable parameters for LocalMinima
+    % have been chosen, but may be cumbersome if processing large batches
+    % of data.
+    
     if showInflectionPoints == 1
+        figure;
+        hold on;
+        t = (1:1:length(galvoTrace));
+        plot(galvoTrace);
+        plot(t(frameOnsetSamples), galvoTrace(frameOnsetSamples), 'r.');
         plot(timerTrace);
         plot(t(trialOnsetSamples), timerTrace(trialOnsetSamples), 'r.'); 
     end
@@ -144,34 +159,34 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     %% Match every trial to the frame within which it started
     trialStartFrames = cell(length(trialOnsetSamples), 1);
     
-    % For each sample number corresponding to a trial start time, find the
-    % highest sample number corresponding to a frame start time below it
+    % For each sample number corresponding to a trial start time, find the highest sample number corresponding to a frame start time below it:
     for i = 1:length(trialStartFrames)
         [M, I] = max(frameOnsetSamples( frameOnsetSamples <= trialOnsetSamples(i) ));
         trialStartFrames{i} = I + 1; % have to add 1 because there's one frame that completes before the first local minimum
     end
 
     
-    %% Merge the trial start time and trial type information
-    trialMatrix = cell(length(trialOnsetSamples), 2);
+    %% Merge the trial start time and trial type information:
+    trialMatrix = cell(length(trialOnsetSamples), 3);
     trialMatrix(:, 1) = trialStartFrames;
     disp(size(trialOnsetSamples));
     disp(size(trialTypes));
-    trialMatrix(:, 2) = trialTypes; 
+    trialMatrix(:, 2:3) = trialTypes; 
     
     
+    %% Write trialMatrix to a .csv: 
     
-    %% Write trialMatrix to a .csv 
+    % Check that the output path exists:
     status = exist(outputPath);
     if status == 0
         mkdir(outputPath);
     end
     
+    % Create and open the output file for writing:
     filename = fullfile(outputPath, 'trialMatrix.csv');
     fileID = fopen(filename, 'w');
-    %fileID = fopen('trialMatrix.csv', 'w');
     
-    % write header:
+    % Write header:
     if exist('grabPath', 'var')
         fprintf(fileID, strcat(['Grab,', strrep(grabPath,'\','\\'), '\n']));
     else
@@ -181,10 +196,10 @@ function [trialMatrix] = registerTrials2frames(galvoPath, timerPath, ardulines, 
     fprintf(fileID, strcat(['Trial timer signal trace, ', strrep(timerPath,'\','\\'), '\n']));
     fprintf(fileID, strcat(['Arduino output, ', strrep(ardulines,'\','\\'), '\n']));
     fprintf(fileID, '\n');
-    fprintf(fileID, 'Trial start frame number, Trial type \n');
+    fprintf(fileID, 'Trial start frame number, Trial type, Trial duration (ms) \n');
     
-    % write trialMatrix:
-    formatSpec = '%d, %s \n';
+    % Write body:
+    formatSpec = '%d, %s, %d \n';
     for i = 1:size(trialMatrix, 1)
         fprintf(fileID, formatSpec, trialMatrix{i,:});
     end
