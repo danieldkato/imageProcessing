@@ -18,10 +18,10 @@
 % column is a string describing the trial condition. 
 
 % 3) conditionNames - C x 1 cell array, where C is the number of trial
-% conditions presented throughout the course of the acquisition. Each entry
-% of C is a string containing the name of a single trial condition. These
-% should match the trial condition descriptions contained in the second
-% column of trials. 
+% conditions presented throughout the course of the acquisition. Each
+% element of C is a struct with two fields: 'Name' and 'Color', where
+% 'Name' is the name of the trial condition and 'Color' is its color code
+% in relevant figures.
 
 % 4) preStim - integer number of samples before trial onset that should be
 % included in the plots for each trial.
@@ -31,44 +31,47 @@
 
 
 % OUTPUTS:
-% 1) T - C x 1 cell array, where C is the number of trial conditions
+% 1) T - C x 2 cell array, where C is the number of trial conditions
 % presented throughout the course of the acquisition. 
 
-% Each element of T is itself a 1 x 2 cell array. The first element is a
-% string containing the name of a trial condition. The second element is an
-% N x P x D matrix, where N is the number of activity channels, P is the
-% number of samples around each trial onset to be plotted for each trial,
-% and D is the number of trials for the given condition. 
+% Each row of T corresponds to a trial condition. The first column of each
+% row contains a string describing the name for a given condition. The
+% second column of each row contains an N x P x D matrix, where N is the
+% number of activity channels, P is the number of samples around each trial
+% onset to be plotted for each trial, and D is the number of trials for the
+% given condition.
 
 
 %%
-function T = trialsByCondition(activity, trials, conditionNames, preStim, postStim)
+function TBC = trialsByCondition(activity, trials, preStim, postStim, Conditions)
 
-    numConditions = size(conditionNames, 1);
-    T = cell(numConditions, 1);
+    numConditions = length(Conditions);
+    disp('trials(:,2)');
+    disp(trials(:,2));
+    
+    numSamples = size(activity, 2);
+    
+    TBC = cell(numConditions, 2);
 
     % For each condition...
     for i = 1:numConditions
         
-        conditionDat = cell(1,2);
-        
-        indices = trials(find(cellfun(@(c) strcmp(c, conditionNames{i}), trials(2,:))),1); % ... get the trial start index for each trial of that condition... 
+        indices = cell2mat(trials(find(cellfun(@(c) strcmp(c, Conditions{i}.Name), trials(:,2))),1)); % ... get the trial start index for each trial of that condition... 
+        indices = indices(find( indices>preStim & indices<=numSamples-postStim )); % Omit trials that begin within preStim samples of the the beginning of the acquisition or within postStim samples of the end of the acquisition.  
         
         % ... and for each trial start index, get a range of samples around
         % it (specified by preStim and postStim) for each channel (e.g.,
         % ROI, unit, etc.). This means that for every index in indices,
         % arrayfun will return an N x P matrix, where N is the number of
         % channels, and P is the number of samples used to plot each trial.
-        % These will be assembled into planes, a 1 x I cell array where I
+        % These will be assembled into planes, an I x 1 cell array where I
         % is the number of indices (i.e. trials of the current condition),
         % and each element of planes is an N x P matrix.
         planes = arrayfun(@(d) activity(:,d-preStim:d+postStim), indices, 'UniformOutput', 0); 
-        cube = reshape(planes, 1, 1, size(planes,2)); % Reshape planes as an N x T x I cube
+        cube = reshape(planes, 1, 1, size(planes,1)); % Reshape planes as an N x T x I cube
         cube = cell2mat(cube); % Convert cube from a cell array to a matrix
         
-        conditionDat{1} = conditionNames{i};
-        conditionDat{2} = cube;
-        
-        T{i} = conditionDat;
+        TBC{i,1} = Conditions{i}.Name;
+        TBC{i,2} = cube;
     end
 end
