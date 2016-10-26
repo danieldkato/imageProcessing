@@ -29,10 +29,20 @@
 % disk as a K x (T-pre-post) .csv for use in subsequent processing steps.
 
 %%
-function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir, Conditions)
+function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir, condSettingsPath)
     dat = csvread(input); % Load the data
     numROIs = size(dat, 1);
     numFrames = size(dat, 2);
+    
+    % Load condition settings:
+    fid = fopen(condSettingsPath);
+    content = fscanf(fid, '%c');
+    eval(content)
+    
+    % Load trial data:
+    [num, txt, raw] = xlsread(Trials);
+    
+    %% Compute whole-grab dFF trace:
     
     % Create an F x 1 vector of frames, where F is the number of frames for
     % which dF/F will be computed. Recall that for a moving boxcar average,
@@ -64,13 +74,13 @@ function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir
     
     
     %% Parse the data into individual trials, and organize by condition:
-    TBC = trialsByCondition(dFF, Trials, preStim, postStim, Conditions);
+    TBC = trialsByCondition(dFF, raw, preStim, postStim, Conditions);
     
     
     %% Save the outputs to disk:
-    status = exist(output, 'dir');
+    status = exist(outputDir, 'dir');
     if status == 0
-        mkdir(output);
+        mkdir(outputDir);
     end 
 
     old = cd(outputDir);
@@ -78,8 +88,10 @@ function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir
     % Create and save files containing full trace dataset:
     csvwrite('dFF.csv', dFF); % create a .csv for easy manual inspection
     h5create('dFF_full_traces.h5', '/fullActivityTraces', size(dFFpadded)); % create an HDF5 in case this is useful later on
-    h5create('dFF_full_traces.h5', '/fullActivityTraces', dFFpadded);
+    h5write('dFF_full_traces.h5', '/fullActivityTraces', dFFpadded);
 
+    disp(TBC(:,1));
+    
     % Create a separate HDF5 file for data parsed into individual trials, organized into one dataset per condition:
     for c = 1:length(TBC)
         dSetName = strcat(['/', TBC{c,1}]);
