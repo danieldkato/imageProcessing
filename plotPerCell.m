@@ -96,27 +96,68 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
        
     stimDur = 2; % this needs to be found dynamically
     
-    % Load dataset of activity parsed into individual trials from HDF5
+    %% Load grab metadata if available:
+    fid2 = fopen(grabMetadata);
+    grabMeta = fscanf(fid2, '%c');
+    eval(grabMeta);
+    
+    
+    %% Load condition metadata:
     info = h5info(activity);
     numConditions = length(info.Datasets);
+    
+    if nargin < 4 % if no conditionSettings.txt is specified, get condition metadata from HDF5 attributes:
+        for c = 1:numConditions
+            Conditions(c).Name = info.Datasets(c).Name;
+            Conditions(c).Abbreviation = h5readatt(activity, strcat(['/', info.Datasets(c).Name]), 'Abbreviation');
+            Conditions(c).Color = h5readatt(activity, strcat('/', info.Datasets(c).Color), 'Color');
+        end
+    else % if conditionSettings.txt is specified, get condition metadata from there:
+       fid = fopen(conditionSettings);
+       fidContent = fscanf(fid, '%c');
+       eval(fidContent);
+       
+       % (should include some code here to check that eval(fidContent) actually creates a struct called Conditions)
+       % (also might want to check whether it has appropriate attributes)
+       
+    end
+    
+    % (should auto-assign abbreviation and color if condition settings are specified in neither conditionSettings.txt or HDF5 attributes)
+    
+    
+    %% Load activity data:
     TBC = cell(numConditions, 1);
+    
+    % Recall that if conditionSettings.txt is specified, steps must be
+    % taken to ensure that data and condition metadata match up; e.g., the
+    % datasets in the HDF5 might be ordered 'stepper only', 'speaker only',
+    % then 'stepper and speaker', while in conditionSettings.txt they may
+    % be ordered 'speaker only', 'stepper and speaker', then 'stepper
+    % only'. Thus, conditions need to be explicitly matched with their
+    % metadata by name, and not just by index.
+    conditionNames = extractfield(Conditions, 'Name');
+    for c = 1:numConditions
+        cIdx = find(arrayfun(@(a) strcmp(a, info.Datasets(c).Name), conditionNames));
+        Conditions(cIdx).Data = h5read(activity, strcat(['/', info.Datasets(c).Name]));
+    end
+    
+    %{
     abbrevs = cell(numConditions, 1);
     for c = 1:numConditions
         TBC{c} = h5read(activity, strcat(['/',info.Datasets(c).Name]));
         abbrevs{c} = h5readatt(activity, strcat(['/',info.Datasets(c).Name]), 'Abbreviation');
     end
+    %}
     
     disp(TBC);
+
     
-    % Load grab metadata if available:
-    fid2 = fopen(grabMetadata);
-    grabMeta = fscanf(fid2, '%c');
-    eval(grabMeta);
-    
+    %{
     % Load condition settings if available:
     fid2 = fopen(conditionSettings);
     condsettings = fscanf(fid2, '%c');
     eval(condsettings);
+    %}
     
     % Convert peri-stimulus period from seconds to samples:
     preStimSamples = h5readatt(activity, '/', 'num_samples_pre_stim');
@@ -125,9 +166,13 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     disp('periStimPeriod');
     disp(periStimPeriod);
     
+    % (should set default behavior for if these attributes aren't found)
+    
     % For convenience and human readability:
     %numROIs = size(activity, 1);
-    numROIs = size(TBC{1},2); % should probably have something to confirm that everything has the same number of ROIs
+    numROIs = size(Conditions(1).Data,1); % should probably have something to confirm that everything has the same number of ROIs
+    disp('numROIs = ');
+    disp(numROIs);
     
     %{
     % Parse trials into TBC (for 'trials by condition'), a C x 2 matrix,
@@ -147,16 +192,13 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     
     %% Compute means and SEM for each condition for each ROI:
     
-    % For each condition, get an N x P means matrix
-    means = cellfun(@(c) mean(c, 3), TBC, 'UniformOutput', 0);
-    disp('means');
-    disp(means);
-    
-    % For each condition, get an N x P standard error of the mean matrix
-    SEM = cellfun(@(c) std(c,0,3)/sqrt(size(c,3)), TBC, 'UniformOutput', 0);
+    for c = 1:numConditions
+        Conditions(c).Means = mean(Conditions(c).Data,3);
+        Conditions(c).SEM = std(Conditions(c).Data, 0, 3)/sqrt(size(Conditions(c).Data, 3));
+    end
     
     
-    %% Create plots:
+    %% Compute some useful variables for plotting:
     
     % Make sure the output directory exists:
     status = exist(outputDirectory, 'dir');
@@ -180,11 +222,13 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
      
     % Write legend text into a cell array:
+    %{
     disp('abbrevs');
     disp(size(abbrevs));
     disp('numTrialsPerC');
     disp(size(numTrialsPerC));
-    legText = cellfun(@(c, d) strcat([c, ', n=', num2str(d)]), abbrevs, numTrialsPerC', 'UniformOutput', 0);
+    %}
+    legText = arrayfun(@(c) strcat([c.Abbreviation, ', n=', num2str(size(c.Data,3))]), Conditions, 'UniformOutput', 0);
     
     % Define some vectors that will be used for plotting shaded SEM areas:
     domain = (1:1:preStimSamples+postStimSamples+1);
@@ -200,7 +244,8 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     titles = {'mean', 'individual'};
     outputs = {meanPaths, rawPaths};
         
-    % For each ROI, create 2 figures: 
+    
+    %% For each ROI, create 2 figures: 
     % 1) a figure plotting mean traces (with SEM bars) for each condition
     % 2) a figure plotting traces for all individual trials (color coded by condition)
     for r = 1:numROIs
@@ -212,29 +257,26 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
         % For current ROI, plot data from each condition:
         for c = 1:numConditions
             
-            colorCode = h5readatt(activity, strcat(['/', info.Datasets(c).Name]), 'Color');
-            disp(colorCode);
-            
             % Plot mean of current condition for current ROI:
             figure(meanFig);
             hold on;
-            meanPlotHandles(c) = plot(means{c}(r,:), 'Color', colorCode, 'LineWidth', 1.25);
+            meanPlotHandles(c) = plot(Conditions(c).Means(r,:), 'Color', Conditions(c).Color, 'LineWidth', 1.25);
             
             % Plot SEM bars of current condition for current ROI:
-            semOver = [means{c}(r,:) fliplr( means{c}(r,:) + SEM{c}(r,:) )];
+            semOver = [Conditions(c).Means(r,:) fliplr( Conditions(c).Means(r,:) + Conditions(c).SEM(r,:) )];
             disp('size(semOver)');
             disp(size(semOver));
             disp('size(semX)');
             disp(size(semX));
-            semUnder = [means{c}(r,:) fliplr( means{c}(r,:) - SEM{c}(r,:) )];
-            semOverPatch = patch(semX, semOver, colorCode', 'EdgeColor', 'none', 'FaceAlpha', 0.2, 'EdgeAlpha', 0.2);
-            semUnderPatch = patch(semX, semUnder, colorCode', 'EdgeColor', 'none', 'FaceAlpha', 0.2, 'EdgeAlpha', 0.2);
+            semUnder = [Conditions(c).Means(r,:) fliplr( Conditions(c).Means(r,:) - Conditions(c).SEM(r,:) )];
+            semOverPatch = patch(semX, semOver, Conditions(c).Color, 'EdgeColor', 'none', 'FaceAlpha', 0.2, 'EdgeAlpha', 0.2);
+            semUnderPatch = patch(semX, semUnder, Conditions(c).Color, 'EdgeColor', 'none', 'FaceAlpha', 0.2, 'EdgeAlpha', 0.2);
             
             % Plot traces for every individual trial of current condition for current ROI:
             figure(rawFig);
             hold on;
-            currROIallTraces = reshape(TBC{c}(r,:,:), numTrialsPerC{c}, periStimPeriod);
-            h = plot(currROIallTraces', 'Color', colorCode);
+            currROIallTraces = reshape(Conditions(c).Data(r,:,:), size(Conditions(c).Data,3), periStimPeriod);
+            h = plot(currROIallTraces', 'Color', Conditions(c).Color);
             rawPlotHandles(c) = h(1);
         end
         
