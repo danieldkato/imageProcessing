@@ -37,10 +37,10 @@ function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir
     % Load condition settings:
     fid = fopen(condSettingsPath);
     content = fscanf(fid, '%c');
-    eval(content)
+    eval(content) % This is where conditions should be loaded in
     
     % Load trial data:
-    [num, txt, raw] = xlsread(Trials);
+    [num, txt, trials] = xlsread(Trials);
     
     %% Compute whole-grab dFF trace:
     
@@ -74,8 +74,14 @@ function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir
     
     
     %% Parse the data into individual trials, and organize by condition:
-    TBC = trialsByCondition(dFF, raw, preStim, postStim, Conditions);
     
+    % IMPORTANT TO REMEMBER: the first column of trials has indices into
+    % input; but we've removed the first m columns of input (as well as the
+    % last n columns) to create dFF; so the indices in trials must be
+    % offset:
+    trials(:,1) = cellfun(@(c) c-m, trials(:,1), 'UniformOutput', 0);
+    
+    TBC = trialsByCondition(dFF, trials, preStim, postStim, Conditions); 
     
     %% Save the outputs to disk:
     status = exist(outputDir, 'dir');
@@ -96,7 +102,11 @@ function dFF = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir
     for c = 1:length(TBC)
         dSetName = strcat(['/', TBC{c,1}]);
         h5create('dFF_parsed_trials.h5', dSetName, size(TBC{c,2}));
+        h5writeatt('dFF_parsed_trials.h5', '/', 'num_samples_pre_stim', preStim);
+        h5writeatt('dFF_parsed_trials.h5', '/', 'num_samples_post_stim', postStim);
         h5write('dFF_parsed_trials.h5', dSetName, TBC{c,2});
+        h5writeatt('dFF_parsed_trials.h5', dSetName, 'Color', Conditions{c}.Color);
+        h5writeatt('dFF_parsed_trials.h5', dSetName, 'Abbreviation', Conditions{c}.Abbreviation);
     end
 
     
