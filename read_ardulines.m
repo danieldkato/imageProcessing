@@ -3,7 +3,7 @@
 % OVERVIEW: 
 % This function takes a .txt file containing serial output read from an
 % Arduino running a given ArduFSM protocol for a single behavior session,
-% and returns a T x 1 cell array of the trial type of each trial delivered
+% and returns a T x 2 cell array of the trial type of each trial delivered
 % during the session, where T is the number of trials delivered during the
 % session.
 
@@ -19,12 +19,32 @@
 
 % https://github.com/cxrodgers/ArduFSM
 
+% 2) conditionSettings - path to a .txt file contaning information about
+% different trial conditions used in the current experiment. This text file
+% should contain a series of MATLAB statements defining a c x 1 cell array
+% of structs called Conditions, where c is the number of conditions. Each
+% struct should minimally include fields corresponding to whatever trial
+% parameters are necessary for defining a condition in the current
+% experiment, as well as a concise condition name that will be assigned to
+% each trial and that can be used later on to easily parse experiments by
+% condition. Example contents of a conditionSettings.txt file might
+% include:
+
+% Conditions{1}.STPRIDX = 1;
+% Conditions{1}.SPKRIDX = 0;
+% Conditions{1].Name = ' stepper only ';
+
+% Conditions{2}.STPRIDX = 0;
+% Conditions{2}.SPKRIDX = 1;
+% Conditions{2}.Name = ' speaker only ';
+
 
 % OUTPUTS:
-% 1) trialTypes - a T x 1 cell array of strings describing the trial type
+% 1) trialTypes - a T x 2 cell array of strings describing the trial type
 % of each trial delivered over the course of a behavior session, where T is
-% the number of trials. Trial types are listed in the order they are
-% delivered.
+% the number of trials. The first column contains the name of the trial
+% condition, and the second column contains the trial duration. Trial types
+% are listed in the order they are delivered.
 
 
 % TODO: 
