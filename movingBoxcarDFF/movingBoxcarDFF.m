@@ -6,12 +6,12 @@
 % boxcar average of frames around any given frame. Processed data is
 % returned in 2 formats:
 
-% 1) a grand k x (t - m -n) activity matrix, where k is the number of ROIs
-% analyzed from the current grab, t is the number of frames analyzed from
-% the current grab, m is the number of frames before any given frame to
-% include in the baseline average for that frame, and n is the number of
-% frames after any given frame to include in the baseline average for that
-% frame.
+% 1) a grand k x t activity matrix, where k is the number of ROIs analyzed
+% from the current grab, and t is the number of frames analyzed from the
+% current grab. The first m and last n columns will be all NaNs, where m is
+% the number of frames before any given frame to include in the baseline
+% average for that frame, and n is the number of frames after any given
+% frame to include in the baseline average for that frame.
 
 % 2) a c x 1 cell array containing activity parsed into individual trials
 % and sorted by condition, where c is the number of trial conditions to be
@@ -77,12 +77,10 @@
 
 
 % OUTPUTS:
-% 1) dFF - a grand k x (t - m -n) activity matrix, where k is the number of ROIs
+% 1) dFF - a grand k x t activity matrix, where k is the number of ROIs
 % analyzed from the current grab, t is the number of frames analyzed from
-% the current grab, m is the number of frames before any given frame to
-% include in the baseline average for that frame, and n is the number of
-% frames after any given frame to include in the baseline average for that
-% frame.
+% the current grab. Note that the first m and last n columns will be all
+% NaNs.
 
 % 2) TBC - a c x 1 cell array containing activity parsed into individual trials
 % and sorted by condition, where c is the number of trial conditions to be
@@ -96,7 +94,7 @@
 % dFF to storage as a .csv and an HDF5, and saves TBC as an HDF5.
 
 %%
-function [dFF, TBC] = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir, condSettingsPath)
+function [dFFpadded, TBC] = movingBoxcarDFF(input, m, n, Trials, preStim, postStim, outputDir, condSettingsPath)
     dat = csvread(input); % Load the data
     numROIs = size(dat, 1);
     numFrames = size(dat, 2);
