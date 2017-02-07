@@ -18,7 +18,7 @@
 
 % Note that this function itself is ONLY responsible for taking the mean
 % and SEM of the data passed as input and plotting it. It dos NOT perform
-% any other computation, e.g. compute dF/F from raw fluorescence values.
+% any other analysis, e.g. compute dF/F from raw fluorescence values.
 % Thus, if the data passed as input are raw fluorescence values, then
 % the values plotted will be raw fluorescence values. 
 
