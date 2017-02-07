@@ -57,9 +57,9 @@
 
 % 2) outputDirectory - directory where all created figures should be saved.
 
-% 3) grabMetadata - path to the metadata.txt file for the grab to be
-% analyzed. This must include the framerate at which the data were
-% acquired. 
+% 3) grabMetadata - path to a MATLAB-evaluable .txt file containing
+% information about the acquisition session. This must include the
+% data acquisition rate in samples per second. 
 
 % 4) conditionSettings - path to a MATLAB-evaluable .txt file defining a 
 % C x 1 cell array of structs, where C is the number of distinct trial
@@ -81,14 +81,14 @@
 % This function saves to disk 2 plots for each ROI from the analyzed
 % dataset:
 
-% 1) A plot with mean dF/F traces plus SEM bars for each condition, and
-% 2) A plot with dF/F traces for every individual trial, color-coded by condition
+% 1) A plot with mean peri-stimulus activity traces plus SEM bars for each condition, and
+% 2) A plot with peri-stimulus traces for every individual trial, color-coded by condition
 
 % In addition, this function formally returns:
 % 1) meanPaths - an N x 1 cell array of strings containing full paths to
-% the saved mean dF/F figures, and 
+% the saved mean activity figures, and 
 % 2) rawPaths - an N x 1 cell array of strings containing full paths to the
-% saved individual trial dF/F figures. 
+% saved individual trial activity figures. 
 
 
 % TODO:
