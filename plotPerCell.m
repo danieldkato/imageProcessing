@@ -1,18 +1,29 @@
-% Last updated DDK 2016-10-23
+% Last updated DDK 2017-02-07
 
 % OVERVIEW:
-% This function produces summary plots for every ROI recorded from a given
-% acquisition session during which multiple different trial or stimulus
-% conditions are presented. For every ROI, this function produces 2 plots:
+% This function creates peri-stimulus activity plots for every unit recorded
+% from a given acquisition session. For every unit, this function creates 2
+% plots:
 
-% 1) A plot with mean dF/F traces plus SEM bars for each condition, and
-% 2) A plot with dF/F traces for every individual trial, color-coded by condition
+% 1) A plot with mean activity traces plus SEM bars, and
+% 2) A plot with activity traces for every individual trial
+
+% All plots are saved to storage in an output directory specified in the
+% function call.
+
+% If the data include responses to multiple stimulus or trial conditions,
+% then individual activity traces will be color-coded according to the
+% mapping defined either in the data file itself or in a condition settings
+% file specified in the function call (see below for detail).
+
+% Note that this function itself is ONLY responsible for taking the mean
+% and SEM of the data passed as input and plotting it. It dos NOT perform
+% any other computation, e.g. compute dF/F from raw fluorescence values.
+% Thus, if the data passed as input are raw fluorescence values, then
+% the values plotted will be raw fluorescence values. 
 
 
 % REQUIREMENTS:
-% 1) The MATLAB function trialsByCondition, available at:
-% https://github.com/danieldkato/trial_registration/blob/master/trialsByCondition.m
-
 % This function should only be used on datasets where the stimulus period
 % for all trials is the same. This function draws a shaded rectangle over
 % the area corresponding to the stimulus period on every plot, so the
@@ -21,18 +32,39 @@
 
 
 % INPUTS:
-% 1) activity - N x T activity matrix, where N is the number of ROIs and T
-% is the number of frames to be analyzed.
+% 1) activity - path to an HDF5 file containing the data to be plotted.
+% Data must be parsed as follows: the HDF5 must include one dataset for
+% each trial or stimulus condition to be analyzed. Each dataset should be
+% an N x T x P activity matrix, where N is the number of ROIs to be
+% analyzed, T is the number of frames in the peri-stimulus period to be
+% plotted, and P is the number of repetitions of the corresponding trial or
+% stimulus condition. N and and T must be the same for all datasets, but P
+% may be different for each.
 
-% 2) trials - S x 2 cell array, where S is the number of trials to be
-% analyzed. Each row corresponds to a trial; the first column of each row
-% is the frame start number of a given trial, and the second column is a
-% string describing the trial condition.
+% In order to properly lay out figure objects like shaded rectangles for
+% stimulus epochs, the HDF5 root must have the following attributes:
+    
+%   a) num_samples_pre_stim: the number of frames before stimulus onset
+%   included in the trace for each trial
 
-% 3) conditions - a C x 1 cell array of structs, where C is the number of
-% distinct trial conditions presented during throughout the course of the
-% trials to be analyzed. Each struct must have at least the following three
-% fields:
+%   b) num_samples_post_stim: the number of frames after stimulus onset
+%   included in the trace for each trial
+
+% In addition to the required attributes described above, the HDF5 may also
+% have the following optional attributes for specifying the appearance of
+% figures:
+
+
+% 2) outputDirectory - directory where all created figures should be saved.
+
+% 3) grabMetadata - path to the metadata.txt file for the grab to be
+% analyzed. This must include the framerate at which the data were
+% acquired. 
+
+% 4) conditionSettings - path to a MATLAB-evaluable .txt file defining a 
+% C x 1 cell array of structs, where C is the number of distinct trial
+% conditions presented during throughout the course of the trials to be
+% analyzed. Each struct must have at least the following three fields:
 
 %   a) Name - the name of the trial condition. This must exactly match the
 %   trial condition descriptions in the second column of trials, described
@@ -43,12 +75,6 @@
 
 %   c) abbreviation - abbreviation for the given trial condition. Will be
 %   used in creating legends for each figure.
-
-% 4) preStimTime - amount of time before stimulus onset from which to plot data, in seconds.
-
-% 5) postStimTime - amount of time after stimulus onset from which to plot data, in seconds. 
-
-% 6) outputDirectory - directory where all created figures should be saved.
 
 
 % OUTPUTS:
@@ -66,10 +92,7 @@
 
 
 % TODO:
-% 1) The framerate is currently hard-coded into this script. Framerate
-% should be read in dynamically from some parameters file.
-
-% 2) Stimulus duration is currently hard-coded into the script. This should
+% 1) Stimulus duration is currently hard-coded into the script. This should
 % also be read in dynamically from somewhere else, like trials (although
 % trials currently only includes trial start frame and condition, not
 % duration, so this would entail changes to how the trial matrix is
@@ -77,16 +100,16 @@
 % verify that all trial durations are the same (which is the only situation
 % in which the shaded stimulus period rectangle makes sense).
 
-% 3) This function requires that the condition names in trials exactly
+% 2) This function requires that the condition names in trials exactly
 % match the condition names in conditions. Should probably throw up an
 % error if this doesn't hold. 
 
-% 4) Maybe think about making the conditions input optional, as it's
+% 3) Maybe think about making the conditions input optional, as it's
 % probably really not necessary; it could just read out the trial
 % conditions from trials, then automatically assign colors and
 % abbreviations to each if none are specified in conditions.
 
-% 5) Perhaps make the outputDirectory argument optional, and have it
+% 4) Perhaps make the outputDirectory argument optional, and have it
 % default to the current working directory.
 
 
