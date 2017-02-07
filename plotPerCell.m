@@ -179,7 +179,7 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     stimPeriod = [preStimSamples+1 preStimSamples+1+stimDur*frame_rate];
     
     % Create a cell array that stores how many trials of each condition were delivered:
-    numTrialsPerC = cellfun(@(c) size(c,3), TBC, 'UniformOutput', 0)';
+    numTrialsPerC = arrayfun(@(c) size(c.Data,3), Conditions, 'UniformOutput', 0)';
     
     % Write legend text into a cell array:
     legText = arrayfun(@(c) strcat([c.Abbreviation, ', n=', num2str(size(c.Data,3))]), Conditions, 'UniformOutput', 0);
@@ -187,16 +187,16 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     
     %% Prepare figure windows and file paths for plotting: 
     
+    % Create cell arrays that will contain full paths to created figures; these will be returned to calling function:
+    meanPaths = cell(numROIs, 1);
+    rawPaths = cell(numROIs, 1);
+    
     % Create figure windows (these will be erased then reused between ROIs):
     meanFig = figure(); % one for mean traces
     rawFig = figure(); % one for raw traces
     figures = {meanFig, rawFig};
     titles = {'mean', 'individual'};
     outputs = {meanPaths, rawPaths};
-    
-    % Create cell arrays that will contain full paths to created figures; these will be returned to calling function:
-    meanPaths = cell(numROIs, 1);
-    rawPaths = cell(numROIs, 1);
         
     % Make sure the output directory exists, create it if it doesn't then cd into it:
     status = exist(outputDirectory, 'dir');
