@@ -36,7 +36,7 @@
 % Data must be parsed as follows: the HDF5 must include one dataset for
 % each trial or stimulus condition to be analyzed. Each dataset should be
 % an N x T x P activity matrix, where N is the number of ROIs to be
-% analyzed, T is the number of frames in the peri-stimulus period to be
+% analyzed, T is the number of samples in the peri-stimulus period to be
 % plotted, and P is the number of repetitions of the corresponding trial or
 % stimulus condition. N and and T must be the same for all datasets, but P
 % may be different for each.
