@@ -144,22 +144,12 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     preStimSamples = h5readatt(activity, '/', 'num_samples_pre_stim');
     postStimSamples = h5readatt(activity, '/', 'num_samples_post_stim');
     periStimPeriod = preStimSamples + postStimSamples + 1;
-    disp('periStimPeriod');
-    disp(periStimPeriod);
     
     % (should set default behavior for if these attributes aren't found)
     
     % For convenience and human readability:
-    %numROIs = size(activity, 1);
     numROIs = size(Conditions(1).Data,1); % should probably have something to confirm that everything has the same number of ROIs
-    disp('numROIs = ');
-    disp(numROIs);
-    
-    % Create a cell array that stores how many trials of each condition
-    % were delivered (will be necessary for plot legends):
-    numTrialsPerC = cellfun(@(c) size(c,3), TBC, 'UniformOutput', 0)';
-    
-    
+       
     
     %% Compute means and SEM for each condition for each ROI:
     
@@ -171,17 +161,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     
     %% Compute some useful variables for plotting:
     
-    % Make sure the output directory exists:
-    status = exist(outputDirectory, 'dir');
-    if status == 0
-        mkdir(outputDirectory);
-    end
-    old = cd(outputDirectory);
-    
-    % Create cell arrays that will contain full paths to created figures; these will be returned to calling function:
-    meanPaths = cell(numROIs, 1);
-    rawPaths = cell(numROIs, 1);
-    
     % Compute appropriate x-tick coordinates (in data units) so that there is one tick at stimulus onset and ticks marks every 2 sec:
     secPerTick = 2;     samplesPerTick = frame_rate*secPerTick;
     nTicksBelowTrialStart = floor((preStimSamples)/samplesPerTick);     ticksBelowTrialStart = (preStimSamples+1) - fliplr(samplesPerTick*(0:1:nTicksBelowTrialStart));
@@ -191,9 +170,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     % Write x-tick labels into a cell array:
     labels = (xticks - (preStimSamples+1))/frame_rate;
     labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
-     
-    % Write legend text into a cell array:
-    legText = arrayfun(@(c) strcat([c.Abbreviation, ', n=', num2str(size(c.Data,3))]), Conditions, 'UniformOutput', 0);
     
     % Define some vectors that will be used for plotting shaded SEM areas:
     domain = (1:1:preStimSamples+postStimSamples+1);
@@ -202,13 +178,33 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     % Define vectors that will be used for plotting shaded stim period rectangle (recall, stim begins at index preStim + 1):
     stimPeriod = [preStimSamples+1 preStimSamples+1+stimDur*frame_rate];
     
+    % Create a cell array that stores how many trials of each condition were delivered:
+    numTrialsPerC = cellfun(@(c) size(c,3), TBC, 'UniformOutput', 0)';
+    
+    % Write legend text into a cell array:
+    legText = arrayfun(@(c) strcat([c.Abbreviation, ', n=', num2str(size(c.Data,3))]), Conditions, 'UniformOutput', 0);
+    
+    
+    %% Prepare figure windows and file paths for plotting: 
+    
     % Create figure windows (these will be erased then reused between ROIs):
     meanFig = figure(); % one for mean traces
     rawFig = figure(); % one for raw traces
     figures = {meanFig, rawFig};
     titles = {'mean', 'individual'};
     outputs = {meanPaths, rawPaths};
+    
+    % Create cell arrays that will contain full paths to created figures; these will be returned to calling function:
+    meanPaths = cell(numROIs, 1);
+    rawPaths = cell(numROIs, 1);
         
+    % Make sure the output directory exists, create it if it doesn't then cd into it:
+    status = exist(outputDirectory, 'dir');
+    if status == 0
+        mkdir(outputDirectory);
+    end
+    old = cd(outputDirectory);
+    
     
     %% For each ROI, create 2 figures: 
     % 1) a figure plotting mean traces (with SEM bars) for each condition
