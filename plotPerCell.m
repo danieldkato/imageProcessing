@@ -126,7 +126,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     
     
     %% Load activity data:
-    TBC = cell(numConditions, 1);
     
     % Recall that if conditionSettings.txt is specified, steps must be
     % taken to ensure that data and condition metadata match up; e.g., the
@@ -140,24 +139,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
         cIdx = find(arrayfun(@(a) strcmp(a, info.Datasets(c).Name), conditionNames));
         Conditions(cIdx).Data = h5read(activity, strcat(['/', info.Datasets(c).Name]));
     end
-    
-    %{
-    abbrevs = cell(numConditions, 1);
-    for c = 1:numConditions
-        TBC{c} = h5read(activity, strcat(['/',info.Datasets(c).Name]));
-        abbrevs{c} = h5readatt(activity, strcat(['/',info.Datasets(c).Name]), 'Abbreviation');
-    end
-    %}
-    
-    disp(TBC);
-
-    
-    %{
-    % Load condition settings if available:
-    fid2 = fopen(conditionSettings);
-    condsettings = fscanf(fid2, '%c');
-    eval(condsettings);
-    %}
     
     % Convert peri-stimulus period from seconds to samples:
     preStimSamples = h5readatt(activity, '/', 'num_samples_pre_stim');
@@ -173,16 +154,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     numROIs = size(Conditions(1).Data,1); % should probably have something to confirm that everything has the same number of ROIs
     disp('numROIs = ');
     disp(numROIs);
-    
-    %{
-    % Parse trials into TBC (for 'trials by condition'), a C x 2 matrix,
-    % where C is the number of condition types. The first element of each
-    % row is a condition name, and the second element of each row is an N x
-    % P x D matrix, where N is the number of cells recorded in the current
-    % acquisition, P is the number of samples to plot around each trial
-    % onset, and D is the number of trials for the given condition.
-    TBC = trialsByCondition(activity, trials, Conditions, preStimSamples, postStimSamples); 
-    %}
     
     % Create a cell array that stores how many trials of each condition
     % were delivered (will be necessary for plot legends):
@@ -222,12 +193,6 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     labels = arrayfun(@(a) num2str(a), labels, 'UniformOutput', 0);
      
     % Write legend text into a cell array:
-    %{
-    disp('abbrevs');
-    disp(size(abbrevs));
-    disp('numTrialsPerC');
-    disp(size(numTrialsPerC));
-    %}
     legText = arrayfun(@(c) strcat([c.Abbreviation, ', n=', num2str(size(c.Data,3))]), Conditions, 'UniformOutput', 0);
     
     % Define some vectors that will be used for plotting shaded SEM areas:
