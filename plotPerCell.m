@@ -34,12 +34,12 @@
 % INPUTS:
 % 1) activity - path to an HDF5 file containing the data to be plotted.
 % Data must be parsed as follows: the HDF5 must include one dataset for
-% each trial or stimulus condition to be analyzed. Each dataset should be
-% an N x T x P activity matrix, where N is the number of ROIs to be
-% analyzed, T is the number of samples in the peri-stimulus period to be
-% plotted, and P is the number of repetitions of the corresponding trial or
-% stimulus condition. N and and T must be the same for all datasets, but P
-% may be different for each.
+% each trial condition or stimulus condition to be analyzed. Each dataset
+% should be an N x T x P activity matrix, where N is the number of ROIs to
+% be analyzed, T is the number of samples in the peri-stimulus period to be
+% plotted, and P is the number of presentations of the corresponding trial
+% or stimulus condition. N and and T must be the same for all datasets, but
+% P may be different for each.
 
 % In order to properly lay out figure objects like shaded rectangles for
 % stimulus epochs, the HDF5 root must have the following attributes:
@@ -148,10 +148,12 @@ function [meanPaths, rawPaths] = plotPerCell(activity, outputDirectory, grabMeta
     % (should auto-assign abbreviation and color if condition settings are specified in neither conditionSettings.txt or HDF5 attributes)
     
     
-    %% Load activity data:
+    %% Load data:
     
     % Recall that if conditionSettings.txt is specified, steps must be
-    % taken to ensure that data and condition metadata match up; e.g., the
+    % taken to ensure that condition metadata is matched up to the
+    % appropriate dataset, as the mapping from index to condition may not
+    % be the same in conditionSettings.txt and the HDF5 file; e.g., the
     % datasets in the HDF5 might be ordered 'stepper only', 'speaker only',
     % then 'stepper and speaker', while in conditionSettings.txt they may
     % be ordered 'speaker only', 'stepper and speaker', then 'stepper
