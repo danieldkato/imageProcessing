@@ -2,16 +2,15 @@ import skimage.external.tifffile
 #import matplotlib.pyplot as plt
 import numpy as np
 import os
-import pyText
 
 # where to put the output files in binary format
-output_directory = '/home/georgia/ToBeMotionCorrected/PM04-2/170404'
+output_directory = '/home/dan/Documents/analysis/motionCorrectedMovies/testMovie'
 
 # output filename (rawfile)
 output_filename = 'rawimage.raw'
 
 # input filename (bigtiff)
-filename = '/mnt/nas2/homes/georgia/Imaging/PM04-2/170404/170404-beh4x_00002.tif'
+filename = '/home/dan/Documents/Data/test_movies/5036-2_test_movie/5036-2_test_movie.tif'
 
 # create an object to read the data
 print "creating object"
