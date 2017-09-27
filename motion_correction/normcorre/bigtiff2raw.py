@@ -48,6 +48,8 @@ with file(os.path.join(output_directory, output_filename), 'wb') as fi:
 
 
 #text when finished
+"""
 msg = '\nConverting BIG tiff complete!'
 recipient = '@vtext.com'
 pyText.textme(msg,recipient)
+"""
