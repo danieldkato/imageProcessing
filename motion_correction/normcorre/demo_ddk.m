@@ -1,6 +1,6 @@
 % demo_ddk.m:
 
-% DOCUMENTATION TABLE OF CONTENTS:      
+%% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
 % II. REQUIREMENTS
 % III. INPUTS
@@ -13,10 +13,10 @@
 % This script is a wrapper for the NoRMCorre motion-correction algorithm.
 % In addition to running the motion correction on an input file, it
 % converts and saves the motion-corrected movies as tiffs, saves a .mat
-% structure including the motion metrics used to evaluate the quality of
-% the motion correction, and writes a metadata JSON file including motion
+% file including the motion metrics used to evaluate the quality of the
+% motion correction, and writes a metadata JSON file including motion
 % correction parameters and version information for input files, output
-% files, and software dependencies. 
+% files, and software dependencies.
 
 
 %% II. REQUIREMENTS:
@@ -26,14 +26,15 @@
 
 
 %% III. INPUTS:
-% This script is not (yet) a function and has no formal inputs, but
-% requires the user to specify a parameters .json file. For an example of
-% how this file should be formatted, see 
+% This script is not a function and has no formal inputs, but requires the
+% user to specify a path to a parameters .json file in the code below (see
+% comments). For an example of how this file should be formatted, see
+% https://github.com/danieldkato/analysis_code/blob/master/motion_correction/normcorre/egparms.json
 
 
 %% IV. 
-% This script is not (yet) a function and therefore has no formal return,
-% but saves the following to secondary storage: 
+% This script is not a function and has no formal return, but saves the
+% following to secondary storage:
 
 % 1) a TIFF of the rigid motion-corrected data
 % 2) a TIFF of the non-rigid motion-corrected data
@@ -54,7 +55,7 @@
 clear
 gcp;
 
-S = loadjson('C:\Users\Dank\Desktop\ncparms.json');
+S = loadjson('C:\Users\Dank\Desktop\ncparms.json'); % specify parameters file here
 
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 name = S.inputs{tiffIdx}.path; 
@@ -66,16 +67,20 @@ Y = single(Y);                 % convert to single precision
 T = size(Y,ndims(Y));
 Y = Y - min(Y(:));
 
+
 %% set parameters (first try out rigid motion correction)
 params = S.params;
 options_rigid = NoRMCorreSetParms('d1',params.d1,'d2',params.d2,'bin_width',params.bin_width,'max_shift',params.max_shift,'us_fac',params.us_fac);
 
-%% perform motion correction
+
+%% perform rigid motion correction
 tic; [M1,shifts1,template1] = normcorre(Y,options_rigid); toc
+
 
 %% now try non-rigid motion correction (also in parallel)
 options_nonrigid = NoRMCorreSetParms('d1',params.d1,'d2',params.d2,'grid_size',params.grid_size,'mot_uf',params.mot_uf,'bin_width',params.bin_width,'max_shift',params.max_shift,'max_dev',params.max_dev,'us_fac',params.us_fac);
 tic; [M2,shifts2,template2] = normcorre_batch(Y,options_nonrigid); toc
+
 
 %% compute metrics
 
@@ -86,6 +91,7 @@ mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies 
 [cM1,mM1,vM1] = motion_metrics(M1,10);
 [cM2,mM2,vM2] = motion_metrics(M2,10);
 T = length(cY);
+
 %% plot metrics
 figure;
     ax1 = subplot(2,3,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
@@ -97,6 +103,8 @@ figure;
     subplot(2,3,6); scatter(cM1,cM2); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
         xlabel('rigid corrected','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
     linkaxes([ax1,ax2,ax3],'xy')
+    
+    
 %% plot shifts        
 
 shifts_r = squeeze(cat(3,shifts1(:).shifts));
@@ -118,6 +126,7 @@ figure;
             xlabel('timestep','fontsize',14,'fontweight','bold')
     linkaxes([ax1,ax2,ax3],'x')
 
+    
 %% Save output:
 t = now;
 dstr = datestr(t, 'yyyy-mm-dd');
