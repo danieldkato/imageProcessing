@@ -32,7 +32,7 @@
 % https://github.com/danieldkato/analysis_code/blob/master/motion_correction/normcorre/egparms.json
 
 
-%% IV. 
+%% IV. OUTPUT:
 % This script is not a function and has no formal return, but saves the
 % following to secondary storage:
 
