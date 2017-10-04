@@ -29,7 +29,7 @@
 % This script is not a function and has no formal inputs, but requires the
 % user to specify a path to a parameters .json file in the code below (see
 % comments). For an example of how this file should be formatted, see
-% https://github.com/danieldkato/analysis_code/blob/master/motion_correction/normcorre/mc_params.json
+% https://github.com/danieldkato/analysis_code/blob/master/motion_correction/normcorre/egparms.json
 
 
 %% IV. OUTPUT:
@@ -55,7 +55,7 @@
 clear
 gcp;
 
-S = loadjson('/mnt/nas2/homes/dan/Lib/imgProcessing/motion_correction/normcorre/mc_parms.json'); % specify parameters file here
+S = loadjson('C:\Users\Dank\Desktop\ncparms.json'); % specify parameters file here
 
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 name = S.inputs{tiffIdx}.path; 
@@ -83,6 +83,7 @@ tic; [M2,shifts2,template2] = normcorre_batch(Y,options_nonrigid); toc
 
 
 %% compute metrics
+
 nnY = quantile(Y(:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 
@@ -90,7 +91,6 @@ mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies 
 [cM1,mM1,vM1] = motion_metrics(M1,10);
 [cM2,mM2,vM2] = motion_metrics(M2,10);
 T = length(cY);
-
 
 %% plot metrics
 figure;
@@ -106,6 +106,7 @@ figure;
     
     
 %% plot shifts        
+
 shifts_r = squeeze(cat(3,shifts1(:).shifts));
 shifts_nr = cat(ndims(shifts2(1).shifts)+1,shifts2(:).shifts);
 shifts_nr = reshape(shifts_nr,[],ndims(Y)-1,T); % DDK 2017-09-30: ndims(Y) and T won't be defined for longer movies not loaded into memory
@@ -202,8 +203,6 @@ end
 % Save metadata:
 savejson('', S, ['MC_metadata_' dtstr '.json']);
 cd(old);
-
-
 %% plot a movie with the results
 
 %{
