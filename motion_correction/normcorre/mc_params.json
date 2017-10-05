@@ -1,8 +1,9 @@
 {
+"description":"Motion correction of raw imaging data using NoRMCorre non-rigid motion correction algorithm.",
 "inputs":[
 		{
 		"input_name":"tiff_to_correct",
-		"path":"C:\\Users\\Dank\\Desktop\\temp\\5036-2_test_movie.tif"
+		"path":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/5036-2_short.tif"
 		}
 	],
 "params":{
@@ -14,5 +15,8 @@
 	"max_shift":15,
 	"max_dev":3,
 	"us_fac":50
+	},
+"outputs":{
+	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short"
 	}
 }
