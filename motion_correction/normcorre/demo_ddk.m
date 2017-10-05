@@ -6,7 +6,7 @@
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-10-03
+% last updated DDK 2017-10-05
 
 
 %% I. OVERVIEW:
@@ -55,12 +55,19 @@
 clear
 gcp;
 
-S = loadjson('/mnt/nas2/homes/dan/Lib/imgProcessing/motion_correction/normcorre/mc_parms.json'); % specify parameters file here
+S = loadjson('/mnt/nas2/homes/dan/Lib/imgProcessing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 name = S.inputs{tiffIdx}.path; 
-[status, cmdout] = system(['fciv.exe -sha1 ' name]);
+if ispc
+    [status, cmdout] = system(['fciv.exe -sha1 ' name]);
+elseif isunix
+    [status, cmdout] = system(['sha1sum ' name]);
+end
 S.inputs{tiffIdx}.sha1 = cmdout(end-length(name)-41:end-length(name)-2);
+
+cd(S.outputs.output_directory)
+S = rmfield(S,'outputs');
 
 tic; Y = read_file(name); toc; % DDK 2017-09-30: this is fine for small test movies, but will have to be replaced with the name of a .raw file for larger movies
 Y = single(Y);                 % convert to single precision 
@@ -93,7 +100,7 @@ T = length(cY);
 
 
 %% plot metrics
-figure;
+f1 = figure;
     ax1 = subplot(2,3,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
     ax2 = subplot(2,3,2); imagesc(mM1,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
     ax3 = subplot(2,3,3); imagesc(mM2,[nnY,mmY]); axis equal; axis tight; axis off; title('mean non-rigid corrected','fontsize',14,'fontweight','bold')
@@ -103,7 +110,7 @@ figure;
     subplot(2,3,6); scatter(cM1,cM2); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
         xlabel('rigid corrected','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
     linkaxes([ax1,ax2,ax3],'xy')
-    
+
     
 %% plot shifts        
 shifts_r = squeeze(cat(3,shifts1(:).shifts));
@@ -116,7 +123,7 @@ patch_id = 1:size(shifts_x,2);
 str = strtrim(cellstr(int2str(patch_id.')));
 str = cellfun(@(x) ['patch # ',x],str,'un',0);
 
-figure;
+f2 = figure;
     ax1 = subplot(311); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold') % DDK 2017-09-30: T won't b defined for longer movies that can't be loaded into memory
             set(gca,'Xtick',[]) 
     ax2 = subplot(312); plot(shifts_x); hold on; plot(shifts_r(:,1),'--k','linewidth',2); title('displacements along x','fontsize',14,'fontweight','bold')
@@ -154,18 +161,38 @@ MM.Nonrigid.Gradient = vM2;
 metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
 save(metricsName, 'MM');
 
-% Compute and save checksums for output files:
-P(1).fieldName = 'rigidMCtiff';
-P(1).file = rmcName;
-P(2).fieldName = 'nonrigidMCtiff';
-P(2).file = nrmcName;
-P(3).fieldName = 'motionMetrics';
-P(3).file = metricsName;
+% Save figures:
+fig1name = [cd filesep 'mc_' dtstr '_mm_fig1.fig'];
+fig2name = [cd filesep 'mc_' dtstr '_mm_fig2.fig'];
+savefig(f1, fig1name);
+savefig(f2, fig2name);
 
+% Compute and save checksums for output files:
+P(1).fieldName = 'rigid_mc_tiff';
+P(1).file = rmcName;
+P(2).fieldName = 'nonrigid_mc_tiff';
+P(2).file = nrmcName;
+P(3).fieldName = 'motion_metrics';
+P(3).file = metricsName;
+P(4).fieldName = 'motion_metrics_fig1';
+P(4).file = fig1name;
+P(5).fieldName = 'motion_metrics_fig2';
+P(5).file = fig2name;
+
+disp('Computing output file checksums...');
 for i = 1:length(P)
     fname = P(i).file;
-    [status, cmdout] = system(['fciv.exe -sha1 ' fname]);
+    
+    tic;
+    if ispc
+        [status, cmdout] = system(['fciv.exe -sha1 ' fname]);
+    elseif isunix
+        [status, cmdout] = system(['sha1sum ' fname]);
+    end
+    
     sha1 = cmdout(end-length(fname)-41:end-length(fname)-2);
+    disp([num2str(i) ' out of ' num2str(length(P)) ' checksums complete.']);
+    toc;
     
     S.outputs(i).output_name = P(i).fieldName;
     S.outputs(i).path = fname;
@@ -180,6 +207,7 @@ S.host_name = strtrim(hname);
 S.notes = '';
 
 % Find software dependencies and get version information where available:
+disp('Retrieiving software dependencies...')
 ST = dbstack('-completenames');
 S.code.main_script.path = ST(1).file;
 [warn, latestCommit] = getLastCommit(S.code.main_script.path);
@@ -188,8 +216,9 @@ if ~isempty(warn)
     S.code.main_script.warnings = strtrim(warn);
 end
 Deps = inmem('-completenames');
-Deps = Deps(cellfun(@(x) ~contains(x, matlabroot),Deps));
-for d = 2:length(Deps)
+Deps = Deps(cellfun(@(x) ~contains(x,matlabroot), Deps));
+Deps = Deps(cellfun(@(x) ~contains(x,'pathdef.m') & ~contains(x,mfilename), Deps));
+for d = 1:length(Deps)
     clear warn
     S.code.dependencies(d).path = Deps{d};
     [warn, latestCommit] = getLastCommit(Deps{d});
@@ -198,9 +227,14 @@ for d = 2:length(Deps)
         S.code.dependencies(d).warnings = strtrim(warn);
     end
 end
+disp('... complete.');
+
+disp('Saving metadata...');
 
 % Save metadata:
 savejson('', S, ['MC_metadata_' dtstr '.json']);
+disp('... complete.');
+
 cd(old);
 
 
