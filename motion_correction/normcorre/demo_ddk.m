@@ -55,7 +55,7 @@
 clear
 gcp;
 
-S = loadjson('/mnt/nas2/homes/dan/Lib/imgProcessing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
+S = loadjson('/mnt/nas2/homes/dan/libraries/image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 name = S.inputs{tiffIdx}.path; 
