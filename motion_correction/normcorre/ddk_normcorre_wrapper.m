@@ -1,4 +1,4 @@
-% demo_ddk.m:
+% ddk_normcorre_wrapper.m:
 
 %% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
@@ -54,6 +54,13 @@
 %% Load parameters:
 clear
 gcp;
+
+% add NoRMCorre and utilities to path; hopefully this won't be necessary
+% after I figure out issues with pathdef.m
+p = genpath('~/Documents/MATLAB/NoRMCorre');
+addpath(p);
+p2 = genpath('/mnt/nas2/homes/dan/libraries/utilities');
+addpath(p2);
 
 S = loadjson('/mnt/nas2/homes/dan/libraries/image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
