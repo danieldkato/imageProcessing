@@ -61,6 +61,8 @@ p = genpath('~/Documents/MATLAB/NoRMCorre');
 addpath(p);
 p2 = genpath('/mnt/nas2/homes/dan/libraries/utilities');
 addpath(p2);
+p3 = genpath('~/Documents/MATLAB/Add-ons/Toolboxes/manur-MATLAB-git-72c72b9');
+addpath(p3);
 
 S = loadjson('/mnt/nas2/homes/dan/libraries/image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
@@ -83,8 +85,63 @@ Y = Y - min(Y(:));
 
 
 %% set parameters (first try out rigid motion correction)
-params = S.params;
-options_rigid = NoRMCorreSetParms('d1',params.d1,'d2',params.d2,'bin_width',params.bin_width,'max_shift',params.max_shift,'us_fac',params.us_fac);
+
+% Will read parameter names and values into the string that you would type
+% into the MATLAB command line to invoke NoRMCorre; this string will be
+% passed to eval() to create the options structure. (The reason for this is
+% that it allows the user to add or remove parameters from the parameters
+% JSON file without having to change the code).
+
+nr_param_names = fieldnames(S.params);
+r_param_names = {'d1','d2','bin_width','max_shift','us_fac'};
+
+set_r_params_str = 'NoRMCorreSetParms(';
+set_nr_params_str = set_r_params_str;
+
+% go through every parameters in the parameter file:
+rigid_param_ctr = 0;
+for s = 1:length(nr_param_names)
+    
+    name = nr_param_names{s}; % get its name
+    val = S.params.(nr_param_names{s}); % get its value
+    
+    % convert the value into a string:
+    if isnumeric(val) && length(val) == 1
+        vStr = num2str(val);
+    elseif isnumeric(val) && length(val) > 1
+        vStr = '[';
+        for v = 1:length(val)
+            vStr = [vStr num2str(val(v)) ' '];
+        end
+        vStr = [vStr ']'];
+    end    
+    
+    % concat name and value strings:
+    kv = ['''' name ''',' vStr];
+    if s<length(nr_param_names)
+       kv = [kv ',']; 
+    end
+        
+    % add it to the non-rigid mc parameters
+    set_nr_params_str = [set_nr_params_str kv];
+    
+    % check if it is also a rigid mc parameter
+    match = cellfun(@(x) strcmp(x, name), r_param_names);
+    if sum(match) > 0 
+        rigid_param_ctr = rigid_param_ctr+1;
+        if rigid_param_ctr == length(r_param_names)
+            kv = kv(1:end-1);
+        end
+        set_r_params_str = [set_r_params_str kv];
+    end
+    
+end
+set_r_params_str = [set_r_params_str ')'];
+disp(set_r_params_str);
+set_nr_params_str = [set_nr_params_str ')'];
+disp(set_nr_params_str);
+
+options_rigid = eval(set_r_params_str);
 
 
 %% perform rigid motion correction
@@ -92,7 +149,7 @@ tic; [M1,shifts1,template1] = normcorre(Y,options_rigid); toc
 
 
 %% now try non-rigid motion correction (also in parallel)
-options_nonrigid = NoRMCorreSetParms('d1',params.d1,'d2',params.d2,'grid_size',params.grid_size,'mot_uf',params.mot_uf,'bin_width',params.bin_width,'max_shift',params.max_shift,'max_dev',params.max_dev,'us_fac',params.us_fac);
+options_nonrigid = eval(set_nr_params_str);
 tic; [M2,shifts2,template2] = normcorre_batch(Y,options_nonrigid); toc
 
 
@@ -223,8 +280,8 @@ if ~isempty(warn)
     S.code.main_script.warnings = strtrim(warn);
 end
 Deps = inmem('-completenames');
-Deps = Deps(cellfun(@(x) ~contains(x,matlabroot), Deps));
-Deps = Deps(cellfun(@(x) ~contains(x,'pathdef.m') & ~contains(x,mfilename), Deps));
+Deps = Deps(cellfun(@(x) ~contains(x,matlabroot), Deps)); % filter out core MATLAB functions - there would be way too many (>600!)
+Deps = Deps(cellfun(@(x) ~contains(x,'pathdef.m') & ~contains(x,mfilename), Deps)); % filter out this script and pathdef.m
 for d = 1:length(Deps)
     clear warn
     S.code.dependencies(d).path = Deps{d};
