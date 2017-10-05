@@ -162,8 +162,8 @@ metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
 save(metricsName, 'MM');
 
 % Save figures:
-fig1name = [cd filesep 'mc_' dtstr '_mm_fig1.fig'];
-fig2name = [cd filesep 'mc_' dtstr '_mm_fig2.fig'];
+fig1name = [cd filesep 'motion_metrics_fig1' dtstr '.fig'];
+fig2name = [cd filesep 'motion_metrics_fig2' dtstr '.fig'];
 savefig(f1, fig1name);
 savefig(f2, fig2name);
 
