@@ -37,12 +37,14 @@
 % This script is not a function and has no formal return, but saves the
 % following to secondary storage:
 
-% 1) a TIFF of the rigid motion-corrected data
-% 2) a TIFF of the non-rigid motion-corrected data
-% 3) a .mat file containing a struct including NoRMCorre's built-in motion
+% 1) a .mat file of the rigid motion-corrected data
+% 2) a .mat file of the non-rigid motion-corrected data
+% 3) a TIFF of the rigid motion-corrected data
+% 4) a TIFF of the non-rigid motion-corrected data
+% 5) a .mat file containing a struct including NoRMCorre's built-in motion
 %    metrics for the raw, rigid motion-corrected, and non-rigid
 %    motion-corrected data
-% 4) a .JSON metadata file including motion correction parameters and
+% 6) a .JSON metadata file including motion correction parameters and
 %    checksums for input files, output files, and software dependencies.
 
 
@@ -58,9 +60,9 @@ gcp;
 
 % add NoRMCorre and utilities to path; hopefully this won't be necessary
 % after I figure out issues with pathdef.m
-p = genpath('~/Documents/MATLAB/NoRMCorre');
+p = genpath('/mnt/nas2/homes/dan/code_libraries/NoRMCorre');
 addpath(p);
-p2 = genpath('/mnt/nas2/homes/dan/libraries/utilities');
+p2 = genpath('/mnt/nas2/homes/dan/code_libraries/utilities');
 addpath(p2);
 p3 = genpath('~/Documents/MATLAB/Add-ons/Toolboxes/manur-MATLAB-git-72c72b9');
 addpath(p3);
@@ -80,6 +82,7 @@ S.inputs{tiffIdx}.sha1 = cmdout(end-length(name)-41:end-length(name)-2);
 cd(S.outputs.output_directory)
 S = rmfield(S,'outputs');
 
+% Load image data:
 tic; Y = read_file(name); toc; % DDK 2017-09-30: this is fine for small test movies, but will have to be replaced with the name of a .raw file for larger movies
 Y = single(Y);                 % convert to single precision 
 T = size(Y,ndims(Y));
