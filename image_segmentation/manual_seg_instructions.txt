@@ -1,0 +1,35 @@
+Last updated DDK 2016-09-27
+
+OVERVIEW: 
+This directory contains folders and files used for manual segmentation of imaging data into individual cell soma. 
+
+
+REQUIREMENTS:
+1) The image processing program Fiji, available at https://fiji.sc/
+
+
+INSTRUCTIONS:
+To manually draw ROIs:
+1) Open the motion-corrected multi-page TIFF in ImageJ or Fiji.
+2) Subtract the mean image from the multi-page TIFF. This will make it easier to visualize changes in pixel value relative to baseline. 
+3) Open Analze>Tools>ROI Manager...
+4) Scroll through the mean-subtracted mutli-page TIFF one frame at a time. This will make fewer potential soma visible at any given time and aid in segmentation.  
+5) While scrolling through the multi-page TIFF, use the 'Freehand Selections' tool to inscribe a region of interest (ROI) around each putative cell soma. 
+6) After inscribing each putative cell soma, press 'Add' in ROI Manager.
+7) After inscribing ROIs around all putative cell soma, navigate to More>>Save... in ROI manager and save the ROIs as manualSeg.zip. 
+
+To view ROIs drawn in previous segmentation sessions:
+1) Open the motion-corrected multi-page TIFF in ImageJ or Fiji.
+2) Open Analyze>Tools>ROI Manager...
+3) In ROI Manager, go to More>>Open... and select the .zip file containing the ROIs created for that movie. 
+
+
+METADATA:
+The metadata files associated with output from this pipeline should have the following format:
+
+segmentation_metadata = 
+{'inputs':{'motion-corrected TIFF':'path\to\motion\corrected\tiff'},
+ 'outputs': {'ROI coordinates (.zip)':'path\to\manualSeg.zip'},
+ 'dependencies': [path\to\Fiji (version)],
+ 'parameters': {}
+}
