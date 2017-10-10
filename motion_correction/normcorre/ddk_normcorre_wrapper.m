@@ -6,17 +6,18 @@
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-10-05
+% last updated DDK 2017-10-10
 
 
 %% I. OVERVIEW:
-% This script is a wrapper for the NoRMCorre motion-correction algorithm.
-% In addition to running the motion correction on an input file, it
-% converts and saves the motion-corrected movies as tiffs, saves a .mat
-% file including the motion metrics used to evaluate the quality of the
-% motion correction, and writes a metadata JSON file including motion
-% correction parameters and version information for input files, output
-% files, and software dependencies.
+% This script is a wrapper for the Simons Foundations' NoRMCorre
+% motion-correction package. In addition to running motion correction on an
+% input file, it saves .mat files of the motion-corrected data, converts
+% and saves the motion-corrected movies as tiffs, saves a .mat file of the
+% motion metrics used to evaluate the quality of the motion correction, and
+% writes a metadata JSON file including motion correction parameters and
+% version information for input files, output files, and software
+% dependencies.
 
 
 %% II. REQUIREMENTS:
@@ -64,8 +65,9 @@ addpath(p2);
 p3 = genpath('~/Documents/MATLAB/Add-ons/Toolboxes/manur-MATLAB-git-72c72b9');
 addpath(p3);
 
-S = loadjson('/mnt/nas2/homes/dan/libraries/image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
+S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
+% Get SHA1 digest of input file:
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 name = S.inputs{tiffIdx}.path; 
 if ispc
@@ -86,11 +88,11 @@ Y = Y - min(Y(:));
 
 %% set parameters (first try out rigid motion correction)
 
-% Will read parameter names and values into the string that you would type
-% into the MATLAB command line to invoke NoRMCorre; this string will be
-% passed to eval() to create the options structure. (The reason for this is
-% that it allows the user to add or remove parameters from the parameters
-% JSON file without having to change the code).
+% Will combine parameter names and values into a string that one would
+% enter into the MATLAB command line to invoke NoRMCorreSetParms; this
+% string will be passed to eval() to create the options structure. (The
+% reason for this is that it allows the user to add or remove parameters
+% from the parameters JSON file without having to change the code).
 
 nr_param_names = fieldnames(S.params);
 r_param_names = {'d1','d2','bin_width','max_shift','us_fac'};
@@ -206,11 +208,22 @@ dirName = ['mc_output_' dtstr];
 mkdir(dirName);
 old = cd(dirName);
 
+base = [cd filesep];
+rmcName = [base 'rigidMC_' dtstr];
+nrmcName = [base 'nonrigidMC_' dtstr];
+
+% Save .raw output of normcorre as .mat files (this is useful for importing
+% into R for segmentation using Scalpel):
+rmcMatName = [rmcName '.mat'];
+save(rmcMatName, 'M1');
+nrmcMatName = [nrmcName '.mat'];
+save(nrmcMatName, 'M2');
+
 % Save motion-corrected movies as tiffs:
-rmcName = [cd filesep 'rigidMC_' dtstr '.tif'];
-saveastiff(M1, rmcName);
-nrmcName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
-saveastiff(M2, nrmcName);
+rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
+saveastiff(M1, rmcTifName);
+nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
+saveastiff(M2, nrmcTifName);
 
 % Assemble motion metrics into a struct and save as .mat
 MM.Uncorrected.CorrCoeffs = cY;
@@ -232,16 +245,20 @@ savefig(f1, fig1name);
 savefig(f2, fig2name);
 
 % Compute and save checksums for output files:
-P(1).fieldName = 'rigid_mc_tiff';
-P(1).file = rmcName;
-P(2).fieldName = 'nonrigid_mc_tiff';
-P(2).file = nrmcName;
-P(3).fieldName = 'motion_metrics';
-P(3).file = metricsName;
-P(4).fieldName = 'motion_metrics_fig1';
-P(4).file = fig1name;
-P(5).fieldName = 'motion_metrics_fig2';
-P(5).file = fig2name;
+P(1).fieldName = 'rigid_mc_mat';
+P(1).file = rmcMatName;
+P(2).fieldName = 'nonrigid_mc_mat';
+P(2).file = nrmcMatName;
+P(3).fieldName = 'rigid_mc_tiff';
+P(3).file = rmcTifName;
+P(4).fieldName = 'nonrigid_mc_tiff';
+P(4).file = nrmcTifName;
+P(5).fieldName = 'motion_metrics';
+P(5).file = metricsName;
+P(6).fieldName = 'motion_metrics_fig1';
+P(6).file = fig1name;
+P(7).fieldName = 'motion_metrics_fig2';
+P(7).file = fig2name;
 
 disp('Computing output file checksums...');
 for i = 1:length(P)
