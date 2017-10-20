@@ -1,0 +1,16 @@
+{
+"description":"Step 1 of automated image segmentation using SCALPEL segmentation algorithm.",
+"inputs":[
+		{"input_name": "step0 results",
+		 "path": "/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/segmentation/Step0Data"
+		}
+	],
+"params":{
+	"max_width":30,
+	"max_height":30,
+	"thresh_quantiles": [0, 0.001]
+	},
+"outputs":{
+	"output_directory":""
+	}
+}
