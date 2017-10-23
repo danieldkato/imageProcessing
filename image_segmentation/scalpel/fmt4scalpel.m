@@ -52,7 +52,6 @@ ncols = dims(2);
 nplanes = dims(3);
 
 % Reshape the data:
-dat = permute(dat, [2 1 3]); % switch rows and columns
 dat = reshape(dat, [nrows*ncols, nplanes]);
 
 % Save re-formatted data:
@@ -81,7 +80,6 @@ M.outputs(1).sha1 = output_sha1(1:40);
 % Save metadata:
 metadata_path = [seg_dir '/Y_1_metadata.json'];
 disp(metadata_path);
-class(metadata_path)
 
 disp('Saving metadata...');
 savejson('',M, metadata_path);
