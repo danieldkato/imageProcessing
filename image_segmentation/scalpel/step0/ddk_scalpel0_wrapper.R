@@ -1,11 +1,75 @@
+# ddk_scalpel0_wrapper.R
+
+# DOCUMENTATION TABLE OF CONTENTS:
+# I. OVERVIEW
+# II. REQUIREMENTS
+# III. INPUTS
+# IV. OUTPUTS
+
+# last updated DDK 2017-10-24
+
+
+####################################################################################################
+# I. OVERVIEW:
+
+# This script is a wrapper for the first step ("step0") of the SCALPEL automated fluorescence movie segmentation
+# pipeline. This step is responsible for spatially and temporally smoothing the data and converting
+# raw gray values to dF/F values. For more detail, see the SCALPEL documentation at https://rdrr.io/cran/scalpel.
+
+
+####################################################################################################
+# II. REQUIREMENTS:
+
+# 1) R.
+# 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
+# 3) The R package rjson. To install, call install.packages("rjson") from inside R. 
+
+
+####################################################################################################
+# III. INPUTS:
+
+# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
+# must specify a path to a JSON file containing the desired parameters.
+
+# This parameters file must include the following fields:
+# 1) params$video_height - the height of the video, in pixels
+# 2) params$output_folder - path to the directory where the output of this step should be saved
+# 3) params$raw_data_folder - path to a .mat file containing the un-segmented input data. This
+#    file must be named Y_1.mat and contain a single (m x n)-by-t matrix, where m is the video
+#    height, n is the video width, and t is the number of frames in the video. For more detail,
+#    see the documentation for scalpelStep0 at https://rdrr/io/cran/scalpel/man/scalpelStep0.html.
+
+# For an example of how the JSON parameters file should be formatted, see
+# https://github.com/danieldkato/imageProcessing/blob/master/image_segmentation/scalpel/step0/scalpel0_params.json
+
+
+####################################################################################################
+# IV. OUTPUTS:
+
+# This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
+# following to secondary storage:
+
+# 1) step0out.Rdata - R object containing information about the output of this processing step. This 
+#    can subsequently be loaded into memory and passed as an argument to SCALPEL functions corresponding
+#    to later processing steps. 
+# 2) metadata.json - a JSON file containing step 0 metadata, including paths and SHA1 digests for inputs 
+#    and outputs, as well as parameters.
+
+# In addition to the files mentioned above, scalpelStep0 itself saves a number of files in a directory called
+# Step0Data in the directory spcified in the `output_folder` parameter. 
+
+
+####################################################################################################
+
+# Load necessary libraries:
 library("scalpel")
 library("rjson")
 
-
+# Load parameters: 
 jsondata <- fromJSON(file="/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/image_segmentation/scalpel/step0/scalpel0_params.json")
 params <- jsondata$params
 
-# ste 0 parameters:
+# Set step 0 parameters:
 raw_data_folder = params$raw_data_folder
 output_folder = params$output_folder
 video_height = params$video_height
