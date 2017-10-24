@@ -1,0 +1,20 @@
+{
+"description":"Step 3 of automated image segmentation using SCALPEL segmentation algorithm.",
+"inputs":[
+		{
+		"input_name":"step2out",
+		"path":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/segmentation/Step1_21743/Step2_omega_0.2_cutoff_0.26/step2out.Rdata"
+		}
+	],
+"params":{
+	"lambda_method":"trainval",
+	"lambda":"NULL",
+	"min_cluster_size":1,
+	"alpha":0.9,
+	"remove_border":"FALSE",
+	"exclude_reps":"discarded"
+	},
+"outputs":{
+	"output_directory":""
+	}
+}
