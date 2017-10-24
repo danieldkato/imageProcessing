@@ -1,3 +1,66 @@
+# ddk_scalpel2_wrapper.R
+
+# DOCUMENTATION TABLE OF CONTENTS:
+# I. OVERVIEW
+# II. REQUIREMENTS
+# III. INPUTS
+# IV. OUTPUTS
+
+# last updated DDK 2017-10-24
+
+
+####################################################################################################
+# I. OVERVIEW:
+
+# This script is a wrapper for the third step ("step 2") of the SCALPEL automated segmentation
+# pipeline. This step is responsible for merging the elements of the preliminary spatial components
+# dictionary produced by step 1. For more detail, see the SCALPEL documentation at https://rdrr.io/cran/scalpel.
+
+
+####################################################################################################
+# II. REQUIREMENTS:
+
+# 1) R.
+# 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
+# 3) The R package rjson. To install, call install.packages("rjson") from inside R. 
+
+
+####################################################################################################
+# III. INPUTS:
+
+# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
+# must specify a path to a JSON file containing the desired parameters.
+
+# This parameters file must include the following fields:
+# 1) params$omega - value in [0,1] indicating how to weight spatial vs. temporal information in the
+#    dissimilarity metric used for clustering.
+# 2) params$cutoff - value in [0,1] indicating where to cut the dendrogram that results from 
+#    hierarchical clustering of the preliminary dictionary elements.
+
+# For more detail on these parameters, see https://rdrr.io/cran/man/scalpelStep2.html and
+# https://arxiv.org/abs/1703.06946.
+
+# For an example of how the JSON parameters file should be formatted, see
+# https://github.com/danieldkato/imageProcessing/blob/master/image_segmentation/scalpel/step2/scalpel2_params.json
+
+
+####################################################################################################
+# IV. OUTPUTS:
+
+# This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
+# following to secondary storage:
+
+# 1) step2out.Rdata - R object containing information about the output of this processing step. This 
+#    can subsequently be loaded into memory and passed as an argument to SCALPEL functions corresponding
+#    to later processing steps. 
+# 2) metadata.json - a JSON file containing step 2 metadata, including paths and SHA1 digests for inputs 
+#    and outputs, as well as parameters.
+
+# In addition to the files mentioned above, scalpelStep2 itself saves a number of files in a directory called
+# Step2_omega_<w>_cuoff_<c>, where <w> is the omega value and <c> is the cutoff value for the current analysis. 
+
+
+####################################################################################################
 library("scalpel")
 library("R.matlab")
 library("rjson")
