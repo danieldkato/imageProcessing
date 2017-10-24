@@ -1,3 +1,69 @@
+# ddk_scalpel1_wrapper.R
+
+# DOCUMENTATION TABLE OF CONTENTS:
+# I. OVERVIEW
+# II. REQUIREMENTS
+# III. INPUTS
+# IV. OUTPUTS
+
+# last updated DDK 2017-10-24
+
+
+####################################################################################################
+# I. OVERVIEW:
+
+# This script is a wrapper for the second step ("step 1") of the SCALPEL automated segmentation
+# pipeline. This step is responsible for creating a preliminary dictionary of spatial components
+# by thresholding each dF/F transformed frame of the given input movie. For more detail, see the
+# SCALPEL documentation at https://rdrr.io/cran/scalpel.
+
+
+####################################################################################################
+# II. REQUIREMENTS:
+
+# 1) R.
+# 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
+# 3) The R package rjson. To install, call install.packages("rjson") from inside R. 
+
+
+####################################################################################################
+# III. INPUTS:
+
+# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
+# must specify a path to a JSON file containing the desired parameters (see comments below). This
+# parameters file should include the following fields:
+
+# 1) params$min_size - the minimum allowable area, in pixels, of a preliminary dictionary component.
+# 2) params$max_width - maximum allowable width, in pixels, of a preliminary dictionary component.
+# 3) params$max_height - maximum allowable hieght, in pixels, of a preliminary dictionary component.
+# 4) params$thresh_quantiles - vector of quantiles that will be used for thresholding in SCALPEL step 1.
+#    For example, if params$thresh_quantiles is set to [0, 0.001], then the thresholds used by SCALPEL
+#    step 1 will be the negative of the minimum of the dF/F-corrected data, the negative of the 0.1%
+#    quantile of the dF/F-corrected data, and the average of the two.
+
+# For more detail on these parameteres, see the SCALPEL step 1 documentaton at https://rdrr/io/cran/scalpel/man/scalpelStep1.html.
+
+# For an example of how the JSON parameters file should be formatted, see
+# https://github.com/danieldkato/imageProcessing/blob/master/image_segmentation/scalpel/step1/scalpel1_params.json
+
+
+####################################################################################################
+# IV. OUTPUTS:
+
+# This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
+# following to secondary storage:
+
+# 1) step1out.Rdata - R object containing information about the output of this processing step. This 
+#    can subsequently be loaded into memory and passed as an argument to SCALPEL functions corresponding
+#    to later processing steps. 
+# 2) metadata.json - a JSON file containing step 1 metadata, including paths and SHA1 digests for inputs 
+#    and outputs, as well as parameters.
+
+# In addition to the files mentioned above, scalpelStep1 itself saves a number of files in a directory called
+# Step1_<VVVVV>, where <VVVVV> is a 5-digit version number. 
+
+
+####################################################################################################
 library("scalpel")
 library("rjson")
 
@@ -6,6 +72,7 @@ params <- jsondata$params
 
 # step 1 parameters:
 step0_dir = jsondata$inputs[[1]]$path
+min_size = params$min_size
 max_height = params$max_height
 max_width = params$max_width
 thresh_quantiles = params$thresh_quantiles
@@ -26,7 +93,7 @@ thresh_values <- -1*thresh_values
 print(thresh_values)
 
 # Perform scalpel step 1:
-step1out = scalpelStep1(step0Output=step0out,maxHeight=max_height,maxWidth=max_width,thresholdVec=thresh_values)
+step1out = scalpelStep1(step0Output=step0out,minSize=min_size,maxHeight=max_height,maxWidth=max_width,thresholdVec=thresh_values)
 
 # Save step1out object in most recent Step1 directory:
 step1_indices = unlist(grepl("Step1",dir()))
