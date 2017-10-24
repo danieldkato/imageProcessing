@@ -3,12 +3,12 @@
 "inputs":[
 		{
 		"input_name":"step1out",
-		"path":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/segmentation/Step1_11516/step1out.Rdata"
+		"path":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/segmentation/Step1_21743/step1out.Rdata"
 		}
 	],
 "params":{
 	"omega":0.2,
-	"cutoff":0.35
+	"cutoff":0.18
 	},
 "outputs":{
 	"output_directory":""
