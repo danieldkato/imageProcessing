@@ -39,22 +39,26 @@
 % column represents the corresponding point's y-coordinate. 
 
 
-%%
-input_path = '/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/segmentation/Step1/Step2/Step2Data/A.mat'; % DEFINE INPUT PATH HERE
+%% Load data:
+input_path = '/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/segmentation/Step1_21743/Step2_omega_0.2_cutoff_0.25/A.mat'; % DEFINE INPUT PATH HERE
 [input_dir, name, ext] = fileparts(input_path);
 cd(input_dir)
 load(input_path); 
 vid_height = 512;
 vid_width = 512;
 num_rois = size(A,2);
+
+
+%% Compute binary mask of of ROI boundaries:
+
+% We want to make a (vid_height-1)-by-(vid_width-1) matrix where the value is
+% 0 if and only if the corresponding pixel in A is surrounded by 1's:
 A = reshape(A, vid_height,vid_width,num_rois); % reshape as h x w x n slab, where n is the number of ROIs
 A_clipped = A(2:vid_height-1,2:vid_width-1,:);
 
 row_indices = (2:vid_height-1);
 col_indices = (2:vid_width-1);
 
-% We want to make a (vid_height-1)-by-(vid_width-1) matrix where the value is
-% 0 if and only if the corresponding pixel in A is surrounded by 1's:
 above_filled = A(row_indices-1,col_indices,:) == 1; % for each pixel in A (not along the border of the frame), is the pixel ABOVE filled in? 1 if yes, 0 if no
 below_filled = A(row_indices+1,col_indices,:) == 1; % for each pixel in A (not along the border of the frame), is the pixel BELOW filled in? 1 if yes, 0 if no
 left_filled = A(row_indices,col_indices-1,:) == 1; % for each pixel in A (not along the border of the frame), is the pixel TO THE LEFT filled in? 1 if yes, 0 if no
@@ -69,6 +73,9 @@ surrounded = [row_zeros; surrounded; row_zeros]; % Pad with top and bottom rows 
 
 % Create 'outlines' matrix: 1 if the corresponding pixel in A is filled and NOT surrounded by other filled pixels, 0 otherwise
 outlines = A & ~surrounded;
+
+
+%% 
 
 % These will be added to outlines to get x and y coordinates of each outline pixel
 cols = repmat((1:vid_width),vid_height,1); % matrix where every element is that element's column number (i.e., x-coordinate)
@@ -90,6 +97,8 @@ for r = 1:num_rois
     
     % Writre the coordinates as a text file:
     fname = ['ROI_' num2str(r) '_coords.txt'];
+    disp(fname)
+    disp(class(fname))
     id = fopen(fname, 'wt');
     for p = 1:length(X)
         fprintf(id, [num2str(X(p)), ' ']);
@@ -98,7 +107,7 @@ for r = 1:num_rois
     fclose(id);
     
     M.outputs(r).path = [input_dir filesep 'ROI_coords_txt' filesep fname];
-    [status, out] = system(["sha1sum " fname]);
+    [status, out] = system(['sha1sum ' fname]);
     sha1 = out(1:40);
     M.outputs(r).sha1 = sha1;
 end
@@ -106,7 +115,7 @@ end
 
 %% Get and save metadata:
 
-[status, input_sha1] = system(["sha1sum " input_path]);
+[status, input_sha1] = system(['sha1sum ' input_path]);
 input_sha1 = input_sha1(1:40);
 
 M.input.path = input_path;
