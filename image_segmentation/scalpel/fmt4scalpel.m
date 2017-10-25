@@ -6,18 +6,19 @@ function fmt4scalpel(path)
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated ddk 2017-10-19
+% last updated ddk 2017-10-24
 
 
 %% I. OVERVIEW:
-% This function re-formats motion-corrected imaging data for use with the
-% SCALPEL automated image segmentation package. This re-formatting entails
-% re-shaping an m-by-n-by-t matrix as an (m x n)-by-t matrix and saving it
-% a as a .mat.
+% This function re-formats 2-dimensional, single-color fluorescence movies
+% for use with the SCALPEL automated image segmentation package. This
+% entails re-shaping an m-by-n-by-t matrix as an (m x n)-by-t matrix and
+% saving it a as a .mat, where m is the image height and n is the image
+% width (in pixels), and t is the number of frames.
 
 
 %% II. REQUIREMENTS:
-% 1) MATLAB >= v. ???
+% 1) JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
 
 
 %% III. INPUTS:
