@@ -41,7 +41,8 @@
 #    step 1 will be the negative of the minimum of the dF/F-corrected data, the negative of the 0.1%
 #    quantile of the dF/F-corrected data, and the average of the two.
 
-# For more detail on these parameteres, see the SCALPEL step 1 documentaton at https://rdrr/io/cran/scalpel/man/scalpelStep1.html.
+# For more detail on these parameteres, see https://rdrr/io/cran/scalpel/man/scalpelStep1.html
+# and https://arxiv.org/pdf/1703.06946.pdf.
 
 # For an example of how the JSON parameters file should be formatted, see
 # https://github.com/danieldkato/imageProcessing/blob/master/image_segmentation/scalpel/step1/scalpel1_params.json

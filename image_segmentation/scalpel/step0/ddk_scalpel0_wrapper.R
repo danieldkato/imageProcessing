@@ -12,7 +12,7 @@
 ####################################################################################################
 # I. OVERVIEW:
 
-# This script is a wrapper for the first step ("step0") of the SCALPEL automated fluorescence movie segmentation
+# This script is a wrapper for the first step ("step0") of the SCALPEL automated segmentation
 # pipeline. This step is responsible for spatially and temporally smoothing the data and converting
 # raw gray values to dF/F values. For more detail, see the SCALPEL documentation at https://rdrr.io/cran/scalpel.
 

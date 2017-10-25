@@ -59,17 +59,21 @@
 #    can subsequently be loaded into memory and passed as an argument to SCALPEL functions corresponding
 #    to later processing steps. 
 # 2) metadata.json - a JSON file containing step 3 metadata, including paths and SHA1 digests for inputs 
-#    and outputs, as well as parameters.
+#    and outputs, as well as parameters. This includes a field called excluded_ROIs, which is a vector
+#    of column indices specifying which columns of step2out$A (i.e.n spatial components) were excluded 
+#    from the current analysis after having been flagged as false neurons during manual curation.
 
 # In addition to the files mentioned above, scalpelStep3 itself saves a number of files in a directory called
 # Step3_<params>, where <params> is a long string specifying the parameters used in the current analysis. 
 
 
 ####################################################################################################
+#Load packages:
 library("scalpel")
 library("R.matlab")
 library("rjson")
 
+# Load parameters:
 jsondata <- fromJSON(file="/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/image_segmentation/scalpel/step3/scalpel3_params.json")
 inputPath = jsondata$inputs[[1]]$path
 params = jsondata$params
@@ -82,6 +86,7 @@ if (params$exclude_reps=="NULL"){
 	params$exclude_reps=NULL
 }
 
+# Load step 2 output:
 load(inputPath)
 step2_dir = dirname(inputPath)
 setwd(step2_dir)
@@ -99,12 +104,9 @@ most_recent_ind = which.min(time_diffs)
 newest_step3_dir = step3_dirs[most_recent_ind]
 setwd(newest_step3_dir) # cd to the msot recent step 2 directory to save some additional outputs there
 
-# Save step2out as an .Rdata object:
+# Save step3out as an .Rdata object:
 s3obj_full_path = paste(step2_dir,newest_step3_dir,"step3out.Rdata",sep="/")
 save(step3out,file=s3obj_full_path)
-
-# TODO: Convert A.mat to .txt?
-
 now = Sys.time()
 date = format(now,format="%Y-%m-%d") 
 time = strftime(now,format="%H:%M:%S")
