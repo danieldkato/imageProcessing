@@ -103,12 +103,12 @@ r_param_names = {'d1','d2','bin_width','max_shift','us_fac'};
 set_r_params_str = 'NoRMCorreSetParms(';
 set_nr_params_str = set_r_params_str;
 
-% go through every parameters in the parameter file:
+% Go through every parameter in the parameter file:
 rigid_param_ctr = 0;
 for s = 1:length(nr_param_names)
     
-    name = nr_param_names{s}; % get its name
-    val = S.params.(nr_param_names{s}); % get its value
+    name = nr_param_names{s}; % get parameter name
+    val = S.params.(nr_param_names{s}); % get parameter value
     
     % convert the value into a string:
     if isnumeric(val) && length(val) == 1
@@ -149,16 +149,16 @@ disp(set_nr_params_str);
 options_rigid = eval(set_r_params_str);
 
 
-%% perform rigid motion correction
+%% Perform rigid motion correction:
 tic; [M1,shifts1,template1] = normcorre(Y,options_rigid); toc
 
 
-%% now try non-rigid motion correction (also in parallel)
+%% Now try non-rigid motion correction (also in parallel):
 options_nonrigid = eval(set_nr_params_str);
 tic; [M2,shifts2,template2] = normcorre_batch(Y,options_nonrigid); toc
 
 
-%% compute metrics
+%% Compute metrics:
 nnY = quantile(Y(:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 
@@ -168,7 +168,7 @@ mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies 
 T = length(cY);
 
 
-%% plot metrics
+%% Plot metrics:
 f1 = figure;
     ax1 = subplot(2,3,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
     ax2 = subplot(2,3,2); imagesc(mM1,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
