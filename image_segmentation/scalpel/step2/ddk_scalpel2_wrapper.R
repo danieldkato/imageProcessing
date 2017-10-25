@@ -11,7 +11,6 @@
 
 ####################################################################################################
 # I. OVERVIEW:
-
 # This script is a wrapper for the third step ("step 2") of the SCALPEL automated segmentation
 # pipeline. This step is responsible for merging the elements of the preliminary spatial components
 # dictionary produced by step 1. For more detail, see the SCALPEL documentation at https://rdrr.io/cran/scalpel.
@@ -23,11 +22,10 @@
 # 1) R.
 # 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
 # 3) The R package rjson. To install, call install.packages("rjson") from inside R. 
-
+# 4) The R package R.matlab. To install, call install.packages("R.matlab") from inside R. 
 
 ####################################################################################################
 # III. INPUTS:
-
 # This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
 # must specify a path to a JSON file containing the desired parameters.
 
@@ -46,14 +44,17 @@
 
 ####################################################################################################
 # IV. OUTPUTS:
-
 # This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
 # following to secondary storage:
 
 # 1) step2out.Rdata - R object containing information about the output of this processing step. This 
 #    can subsequently be loaded into memory and passed as an argument to SCALPEL functions corresponding
-#    to later processing steps. 
-# 2) metadata.json - a JSON file containing step 2 metadata, including paths and SHA1 digests for inputs 
+#    to later processing steps.
+# 2) A.mat - a .mat file containg a (w x h)-by-n binary matrix, where w is the video width, h is the video
+#    height, and n is the number of refined spatial components identified by step 2. Each column represents
+#    an individual spatial component, and each row within that column indicates whether the corresponding
+#    pixel is part of the spatial component.
+# 3) metadata.json - a JSON file containing step 2 metadata, including paths and SHA1 digests for inputs 
 #    and outputs, as well as parameters.
 
 # In addition to the files mentioned above, scalpelStep2 itself saves a number of files in a directory called

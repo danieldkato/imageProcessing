@@ -29,9 +29,9 @@
 # III. INPUTS:
 
 # This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
-# must specify a path to a JSON file containing the desired parameters.
+# must specify a path to a JSON file containing the desired parameters.  This parameters file must
+# include the following fields:
 
-# This parameters file must include the following fields:
 # 1) params$video_height - the height of the video, in pixels
 # 2) params$output_folder - path to the directory where the output of this step should be saved
 # 3) params$raw_data_folder - path to a .mat file containing the un-segmented input data. This
