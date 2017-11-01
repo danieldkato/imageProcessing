@@ -73,9 +73,27 @@ elseif isunix
 end
 S.inputs{tiffIdx}.sha1 = cmdout(end-length(name)-41:end-length(name)-2);
 
+% CD to motion correction directory:
 cd(S.outputs.output_directory)
 S = rmfield(S,'outputs');
 
+% Create a directory for this specific run of NoRMCorre; need to create
+% this BEFORE running normcorre_batch() so memory-mapped output files can
+% be saved to correct location:
+t = now;
+dstr = datestr(t, 'yyyy-mm-dd');
+tstr = datestr(t, 'HH:MM:SS');
+dtstr = strrep([dstr '_' tstr],':','-');
+dirName = ['mc_output_' dtstr];
+mkdir(dirName);
+old = cd(dirName);
+
+base = [cd filesep];
+rmcName = [base 'rigidMC_' dtstr];
+nrmcName = [base 'nonrigidMC_' dtstr];
+
+% Code for loading input movie into memory; commenting out because this
+% will not work for large movies
 %{
 % Load image data:
 tic; Y = read_file(name); toc; % DDK 2017-09-30: this is fine for small test movies, but will have to be replaced with the name of a .raw file for larger movies
@@ -145,13 +163,13 @@ disp(set_nr_params_str);
 
 %% Perform rigid motion correction:
 options_rigid = eval(set_r_params_str);
-options_rigid.mem_filename = 'nr_motion_corrected.mat';
+options_rigid.mem_filename = rmc_name;
 tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc
 
 
 %% Now try non-rigid motion correction (also in parallel):
 options_nonrigid = eval(set_nr_params_str);
-options_nonrigid.mem_filename = 'r_motion_corrected.mat';
+options_nonrigid.mem_filename = nrmc_name;
 tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc
 
 
@@ -200,17 +218,7 @@ f2 = figure;
 
     
 %% Save output:
-t = now;
-dstr = datestr(t, 'yyyy-mm-dd');
-tstr = datestr(t, 'HH:MM:SS');
-dtstr = strrep([dstr '_' tstr],':','-');
-dirName = ['mc_output_' dtstr];
-mkdir(dirName);
-old = cd(dirName);
 
-base = [cd filesep];
-rmcName = [base 'rigidMC_' dtstr];
-nrmcName = [base 'nonrigidMC_' dtstr];
 
 % Save .raw output of normcorre as .mat files (this is useful for importing
 % into R for segmentation using Scalpel):
