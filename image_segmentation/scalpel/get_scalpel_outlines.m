@@ -6,7 +6,7 @@
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated ddk 2017-10-19
+% last updated ddk 2017-10-25
 
 
 %% I. OVERVIEW:
@@ -75,7 +75,7 @@ surrounded = [row_zeros; surrounded; row_zeros]; % Pad with top and bottom rows 
 outlines = A & ~surrounded;
 
 
-%% 
+%% Write coordinates of ROI boundary pixels to .txt files:
 
 % These will be added to outlines to get x and y coordinates of each outline pixel
 cols = repmat((1:vid_width),vid_height,1); % matrix where every element is that element's column number (i.e., x-coordinate)
