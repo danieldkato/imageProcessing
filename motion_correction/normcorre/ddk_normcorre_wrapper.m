@@ -6,7 +6,7 @@
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-10-10
+% last updated DDK 2017-11-01
 
 
 %% I. OVERVIEW:
@@ -60,9 +60,12 @@ gcp;
 
 S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
-% Get SHA1 digest of input file:
+% Get name of input file (necessary for larger files that can't be loaded
+% into memory):
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
-name = S.inputs{tiffIdx}.path; 
+input_name = S.inputs(tiffIdx).path; 
+
+% Get SHA1 digest of input file:
 if ispc
     [status, cmdout] = system(['fciv.exe -sha1 ' name]);
 elseif isunix
@@ -73,11 +76,13 @@ S.inputs{tiffIdx}.sha1 = cmdout(end-length(name)-41:end-length(name)-2);
 cd(S.outputs.output_directory)
 S = rmfield(S,'outputs');
 
+%{
 % Load image data:
 tic; Y = read_file(name); toc; % DDK 2017-09-30: this is fine for small test movies, but will have to be replaced with the name of a .raw file for larger movies
 Y = single(Y);                 % convert to single precision 
 T = size(Y,ndims(Y));
 Y = Y - min(Y(:));
+%}
 
 
 %% set parameters (first try out rigid motion correction)
@@ -140,12 +145,14 @@ disp(set_nr_params_str);
 
 %% Perform rigid motion correction:
 options_rigid = eval(set_r_params_str);
-tic; [M1,shifts1,template1] = normcorre(Y,options_rigid); toc
+options_rigid.mem_filename = 'nr_motion_corrected.mat';
+tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc
 
 
 %% Now try non-rigid motion correction (also in parallel):
 options_nonrigid = eval(set_nr_params_str);
-tic; [M2,shifts2,template2] = normcorre_batch(Y,options_nonrigid); toc
+options_nonrigid.mem_filename = 'r_motion_corrected.mat';
+tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc
 
 
 %% Compute metrics:

@@ -14,7 +14,8 @@
 	"bin_width":50,
 	"max_shift":15,
 	"max_dev":3,
-	"us_fac":50
+	"us_fac":50,
+	"output_type":"memmap"
 	},
 "outputs":{
 	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short"
