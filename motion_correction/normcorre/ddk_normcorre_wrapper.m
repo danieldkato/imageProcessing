@@ -174,6 +174,7 @@ tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc
 
 
 %% Compute metrics:
+%{
 nnY = quantile(Y(:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 
@@ -215,17 +216,10 @@ f2 = figure;
     ax3 = subplot(313); plot(shifts_y); hold on; plot(shifts_r(:,2),'--k','linewidth',2); title('displacements along y','fontsize',14,'fontweight','bold')
             xlabel('timestep','fontsize',14,'fontweight','bold')
     linkaxes([ax1,ax2,ax3],'x')
-
+%}
     
 %% Save output:
 
-
-% Save .raw output of normcorre as .mat files (this is useful for importing
-% into R for segmentation using Scalpel):
-rmcMatName = [rmcName '.mat'];
-save(rmcMatName, 'M1');
-nrmcMatName = [nrmcName '.mat'];
-save(nrmcMatName, 'M2');
 
 % Save motion-corrected movies as tiffs:
 rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
@@ -233,6 +227,7 @@ saveastiff(M1, rmcTifName);
 nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
 saveastiff(M2, nrmcTifName);
 
+%{
 % Assemble motion metrics into a struct and save as .mat
 MM.Uncorrected.CorrCoeffs = cY;
 MM.Uncorrected.MeanImg = mY;
@@ -251,6 +246,7 @@ fig1name = [cd filesep 'motion_metrics_fig1' dtstr '.fig'];
 fig2name = [cd filesep 'motion_metrics_fig2' dtstr '.fig'];
 savefig(f1, fig1name);
 savefig(f2, fig2name);
+%}
 
 % Compute and save checksums for output files:
 P(1).fieldName = 'rigid_mc_mat';
