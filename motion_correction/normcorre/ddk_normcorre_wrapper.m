@@ -137,10 +137,9 @@ disp(set_r_params_str);
 set_nr_params_str = [set_nr_params_str ')'];
 disp(set_nr_params_str);
 
-options_rigid = eval(set_r_params_str);
-
 
 %% Perform rigid motion correction:
+options_rigid = eval(set_r_params_str);
 tic; [M1,shifts1,template1] = normcorre(Y,options_rigid); toc
 
 
