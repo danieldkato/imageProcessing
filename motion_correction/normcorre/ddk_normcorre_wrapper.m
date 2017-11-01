@@ -58,15 +58,6 @@
 clear
 gcp;
 
-% add NoRMCorre and utilities to path; hopefully this won't be necessary
-% after I figure out issues with pathdef.m
-p = genpath('/mnt/nas2/homes/dan/code_libraries/NoRMCorre');
-addpath(p);
-p2 = genpath('/mnt/nas2/homes/dan/code_libraries/utilities');
-addpath(p2);
-p3 = genpath('~/Documents/MATLAB/Add-ons/Toolboxes/manur-MATLAB-git-72c72b9');
-addpath(p3);
-
 S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
 % Get SHA1 digest of input file:
