@@ -68,7 +68,10 @@
 library("scalpel")
 library("rjson")
 
-jsondata <- fromJSON(file="/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/image_segmentation/scalpel/step1/scalpel1_params.json")
+# Get path to parameters file from command line input:
+args = commandArgs(trailingOnly=TRUE)
+
+jsondata <- fromJSON(file=args[1])
 params <- jsondata$params
 
 # step 1 parameters:
