@@ -2,11 +2,12 @@
 
 # DOCUMENTATION TABLE OF CONTENTS:
 # I. OVERVIEW
-# II. REQUIREMENTS
-# III. INPUTS
-# IV. OUTPUTS
+# II. USAGE
+# III. REQUIREMENTS
+# IV. INPUTS
+# V. OUTPUTS
 
-# last updated DDK 2017-10-24
+# last updated DDK 2017-11-02
 
 
 ####################################################################################################
@@ -17,19 +18,25 @@
 
 
 ####################################################################################################
-# II. REQUIREMENTS:
+# II. USAGE:
+
+# R < ddk_scalpel2_wrapper.R <path/to/params/file> --no-save
+
+
+####################################################################################################
+# III. REQUIREMENTS:
 
 # 1) R.
 # 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
 # 3) The R package rjson. To install, call install.packages("rjson") from inside R. 
 # 4) The R package R.matlab. To install, call install.packages("R.matlab") from inside R. 
 
-####################################################################################################
-# III. INPUTS:
-# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
-# must specify a path to a JSON file containing the desired parameters.
 
+####################################################################################################
+# IV. INPUTS:
+# This command-line function takes one argument, namely, a path to a parameters file (see USAGE above).
 # This parameters file must include the following fields:
+
 # 1) params$omega - value in [0,1] indicating how to weight spatial vs. temporal information in the
 #    dissimilarity metric used for clustering.
 # 2) params$cutoff - value in [0,1] indicating where to cut the dendrogram that results from 
@@ -43,7 +50,7 @@
 
 
 ####################################################################################################
-# IV. OUTPUTS:
+# V. OUTPUTS:
 # This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
 # following to secondary storage:
 
@@ -66,7 +73,10 @@ library("scalpel")
 library("R.matlab")
 library("rjson")
 
-jsondata <- fromJSON(file="/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/image_segmentation/scalpel/step2/scalpel2_params.json")
+args = commandArgs()
+print(args)
+
+jsondata <- fromJSON(file=args[2])
 inputPath = jsondata$inputs[[1]]$path
 cutoff = jsondata$params$cutoff
 omega = jsondata$params$omega
@@ -74,6 +84,13 @@ omega = jsondata$params$omega
 load(inputPath)
 step1_dir = dirname(inputPath)
 setwd(step1_dir)
+
+print(cutoff)
+print(class(cutoff))
+print(omega)
+print(class(omega))
+str(step1out)
+print(class(step1out))
 
 # Perform SCALPEL step 2:
 step2out = scalpelStep2(step1Output=step1out,cutoff=cutoff,omega=omega)
