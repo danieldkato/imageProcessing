@@ -1,12 +1,13 @@
 # ddk_scalpel1_wrapper.R
 
 # DOCUMENTATION TABLE OF CONTENTS:
-# I. OVERVIEW
-# II. REQUIREMENTS
-# III. INPUTS
-# IV. OUTPUTS
+# I. OVERVIEWi
+# II. USAGE
+# III. REQUIREMENTS
+# IV. INPUTS
+# V. OUTPUTS
 
-# last updated DDK 2017-10-24
+# last updated DDK 2017-11-03
 
 
 ####################################################################################################
@@ -19,7 +20,13 @@
 
 
 ####################################################################################################
-# II. REQUIREMENTS:
+# II. USAGE:
+
+# R < ddk_scalpel1_wrapper.R </path/to/params/file> --no-save
+
+
+####################################################################################################
+# III. REQUIREMENTS:
 
 # 1) R.
 # 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
@@ -27,11 +34,10 @@
 
 
 ####################################################################################################
-# III. INPUTS:
+# IV. INPUTS:
 
-# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
-# must specify a path to a JSON file containing the desired parameters (see comments below). This
-# parameters file should include the following fields:
+# This command line function takes a single argument, namely, the path to a JSON parameters file (see 
+# USAGE above). This parameters file must minimally include the following fields:
 
 # 1) params$min_size - the minimum allowable area, in pixels, of a preliminary dictionary component.
 # 2) params$max_width - maximum allowable width, in pixels, of a preliminary dictionary component.
@@ -49,7 +55,7 @@
 
 
 ####################################################################################################
-# IV. OUTPUTS:
+# V. OUTPUTS:
 
 # This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
 # following to secondary storage:
@@ -69,9 +75,9 @@ library("scalpel")
 library("rjson")
 
 # Get path to parameters file from command line input:
-args = commandArgs(trailingOnly=TRUE)
+args = commandArgs()
 
-jsondata <- fromJSON(file=args[1])
+jsondata <- fromJSON(file=args[2])
 params <- jsondata$params
 
 # step 1 parameters:
