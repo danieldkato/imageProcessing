@@ -2,11 +2,12 @@
 
 # DOCUMENTATION TABLE OF CONTENTS:
 # I. OVERVIEW
-# II. REQUIREMENTS
-# III. INPUTS
-# IV. OUTPUTS
+# II. USAGE
+# III. REQUIREMENTS
+# IV. INPUTS
+# V. OUTPUTS
 
-# last updated DDK 2017-10-24
+# last updated DDK 2017-11-03
 
 
 ####################################################################################################
@@ -18,7 +19,13 @@
 
 
 ####################################################################################################
-# II. REQUIREMENTS:
+# II. USAGE
+
+# R < ddk_scalpel0_wrapper.R </path/to/params/file> --no-save
+
+
+####################################################################################################
+# III. REQUIREMENTS:
 
 # 1) R.
 # 2) The R package SCALPEL. For installation instructions, see https://rdrr.io/cran/scalpel.
@@ -26,11 +33,10 @@
 
 
 ####################################################################################################
-# III. INPUTS:
+# IV. INPUTS:
 
-# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
-# must specify a path to a JSON file containing the desired parameters.  This parameters file must
-# include the following fields:
+# This command-line function takes a single argument, namely, the path to a parameters file (see USAGE
+# above). This parameters file must include the following fields:
 
 # 1) params$video_height - the height of the video, in pixels
 # 2) params$output_folder - path to the directory where the output of this step should be saved
@@ -44,7 +50,7 @@
 
 
 ####################################################################################################
-# IV. OUTPUTS:
+# V. OUTPUTS:
 
 # This script is not (yet) a function and thus has no formal return. However, this wrapper  saves the
 # following to secondary storage:
@@ -66,10 +72,10 @@ library("scalpel")
 library("rjson")
 
 # Get path to parameters file from command line:
-args = commandArgs(trailingOnly=TRUE)
+args = commandArgs()
 
 # Load parameters: 
-jsondata <- fromJSON(file=args[1])
+jsondata <- fromJSON(file=args[2])
 params <- jsondata$params
 
 # Set step 0 parameters:
