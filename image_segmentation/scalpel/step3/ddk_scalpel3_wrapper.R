@@ -2,9 +2,10 @@
 
 # DOCUMENTATION TABLE OF CONTENTS:
 # I. OVERVIEW
-# II. REQUIREMENTS
-# III. INPUTS
-# IV. OUTPUTS
+# II. USAGE
+# III. REQUIREMENTS
+# IV. INPUTS
+# V. OUTPUTS
 
 # last updated DDK 2017-10-24
 
@@ -19,6 +20,12 @@
 
 
 ####################################################################################################
+# II. USAGE:
+
+# R < ddk_scalpel3_wrapper.R </path/to/params/file> --no-save
+
+
+####################################################################################################
 # II. REQUIREMENTS:
 
 # 1) R.
@@ -29,9 +36,8 @@
 ####################################################################################################
 # III. INPUTS:
 
-# This script is not (yet) a function and thus takes no formal input arguments. Instead, the user
-# must specify a path to a JSON file containing the desired parameters. This parameters file must
-# include the following fields:
+# This function takes a single input argument, namely, the path to a parameters JSON file (see USAGE
+# above). This parameters file must include the following fields:
 
 # 1) params$lambda_method - description of how lambda should be chose. See man pages (link below) for details.
 # 2) params$lambda - value of lambda to use when fitting sparse group lasso. If not NULL, lambda_method will not be used.
@@ -73,8 +79,11 @@ library("scalpel")
 library("R.matlab")
 library("rjson")
 
+# Get path to params file from command-line arguments:
+args = commandLine()
+
 # Load parameters:
-jsondata <- fromJSON(file="/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/image_segmentation/scalpel/step3/scalpel3_params.json")
+jsondata <- fromJSON(file=args[2])
 inputPath = jsondata$inputs[[1]]$path
 params = jsondata$params
 
