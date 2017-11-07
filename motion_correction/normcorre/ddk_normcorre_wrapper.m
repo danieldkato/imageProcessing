@@ -12,12 +12,11 @@
 %% I. OVERVIEW:
 % This script is a wrapper for the Simons Foundations' NoRMCorre
 % motion-correction package. In addition to running motion correction on an
-% input file, it saves .mat files of the motion-corrected data, converts
-% and saves the motion-corrected movies as tiffs, saves a .mat file of the
-% motion metrics used to evaluate the quality of the motion correction, and
-% writes a metadata JSON file including motion correction parameters and
-% version information for input files, output files, and software
-% dependencies.
+% input file, it saves .mat files of the motion-corrected data, a .mat file
+% of the motion metrics used to evaluate the quality of the motion
+% correction, and a metadata JSON file including motion correction
+% parameters and version information for input files, output files, and
+% software dependencies.
 
 
 %% II. REQUIREMENTS:
@@ -29,7 +28,45 @@
 %% III. INPUTS:
 % This script is not a function and has no formal inputs, but requires the
 % user to specify a path to a parameters .json file in the code below (see
-% comments). For an example of how this file should be formatted, see
+% comments). Example contents of such a file might be as follows:
+
+% {
+% "description":"Motion correction of raw imaging data using NoRMCorre non-rigid motion correction algorithm.",
+% "inputs":[
+%		{
+%		"input_name":"tiff_to_correct",
+%		"path":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/5036-2_short.tif"
+%		}
+%	],
+% "params":{
+%	"d1":512,
+%	"d2":512,
+%	"grid_size":[32,32],
+%	"mot_uf":4,
+%	"bin_width":50,
+%	"max_shift":15,
+%	"max_dev":3,
+%	"us_fac":50,
+%	"output_type":"memmap"
+%	},
+%"outputs":{
+%	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short"
+%	}
+%}
+
+% Note that at the moment, this script assumes that the input file is 1)
+% large, and therefore doesn't try to load it into memory, and 2) a TIFF.
+% Because of this, this script omits certain parts of the original
+% NoRMCorre demo, like computing and plotting the motion metrics for the
+% raw movie, which requires that the raw movie be small enough to load into
+% memory or saved as a .mat. 
+
+% Also, note that if the input file is very large, then the `output_type`
+% parameter MUST be set to any value other that `mat` - otherwise,
+% NoRMCorre will by default try to save the output as an in-memory variable
+% (which the output will be too large for).
+
+% For another example of how this file should be formatted, see
 % https://github.com/danieldkato/analysis_code/blob/master/motion_correction/normcorre/mc_params.json
 
 
