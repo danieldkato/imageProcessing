@@ -39,11 +39,12 @@
 
 % 1) a .mat file of the rigid motion-corrected data
 % 2) a .mat file of the non-rigid motion-corrected data
+% 3) A .mat files of motion metrics output (see NoRMCorre
+%    documentation for more detail on motion metrics).
 
 
 %% TODO:
-% 1) Save .mat files of motion metrics output.
-% 2) Would be nice to have some way to also save output as a TIFF for
+% 1) Would be nice to have some way to also save output as a TIFF for
 % quick visual inspection
 
 
