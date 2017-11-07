@@ -6,7 +6,7 @@
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-11-01
+% last updated DDK 2017-11-07
 
 
 %% I. OVERVIEW:
@@ -39,12 +39,12 @@
 
 % 1) a .mat file of the rigid motion-corrected data
 % 2) a .mat file of the non-rigid motion-corrected data
-% 3) a TIFF of the rigid motion-corrected data
-% 4) a TIFF of the non-rigid motion-corrected data
 
 
 %% TODO:
 % 1) Save .mat files of motion metrics output.
+% 2) Would be nice to have some way to also save output as a TIFF for
+% quick visual inspection
 
 
 %% Load parameters:
