@@ -63,15 +63,15 @@ S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_cor
 % Get name of input file (necessary for larger files that can't be loaded
 % into memory):
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
-input_name = S.inputs(tiffIdx).path; 
+input_name = S.inputs{tiffIdx}.path; 
 
 % Get SHA1 digest of input file:
 if ispc
-    [status, cmdout] = system(['fciv.exe -sha1 ' name]);
+    [status, cmdout] = system(['fciv.exe -sha1 ' input_name]);
 elseif isunix
-    [status, cmdout] = system(['sha1sum ' name]);
+    [status, cmdout] = system(['sha1sum ' input_name]);
 end
-S.inputs{tiffIdx}.sha1 = cmdout(end-length(name)-41:end-length(name)-2);
+S.inputs{tiffIdx}.sha1 = cmdout(end-length(input_name)-41:end-length(input_name)-2);
 
 % CD to motion correction directory:
 cd(S.outputs.output_directory)
@@ -89,8 +89,8 @@ mkdir(dirName);
 old = cd(dirName);
 
 base = [cd filesep];
-rmcName = [base 'rigidMC_' dtstr];
-nrmcName = [base 'nonrigidMC_' dtstr];
+rmc_name = [base 'rigidMC_' dtstr];
+nrmc_name = [base 'nonrigidMC_' dtstr];
 
 % Code for loading input movie into memory; commenting out because this
 % will not work for large movies
@@ -112,7 +112,7 @@ Y = Y - min(Y(:));
 % from the parameters JSON file without having to change the code).
 
 nr_param_names = fieldnames(S.params);
-r_param_names = {'d1','d2','bin_width','max_shift','us_fac'};
+r_param_names = {'d1','d2','bin_width','max_shift','us_fac','output_type'};
 
 set_r_params_str = 'NoRMCorreSetParms(';
 set_nr_params_str = set_r_params_str;
@@ -133,6 +133,8 @@ for s = 1:length(nr_param_names)
             vStr = [vStr num2str(val(v)) ' '];
         end
         vStr = [vStr ']'];
+    elseif ischar(val)
+        vStr = [ '''' val ''''];
     end    
     
     % concat name and value strings:
