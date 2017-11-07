@@ -143,7 +143,7 @@ for s = 1:length(nr_param_names)
     match = cellfun(@(x) strcmp(x, name), r_param_names);
     if sum(match) > 0 
         rigid_param_ctr = rigid_param_ctr+1;
-        if rigid_param_ctr == length(r_param_names)
+        if rigid_param_ctr == length(r_param_names) && kv(end) == ','
             kv = kv(1:end-1);
         end
         set_r_params_str = [set_r_params_str kv];
