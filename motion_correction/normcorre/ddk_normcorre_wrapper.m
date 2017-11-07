@@ -169,25 +169,27 @@ tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc
 
 
 %% Compute metrics:
-%{
-nnY = quantile(Y(:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
-mmY = quantile(Y(:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 
-[cY,mY,vY] = motion_metrics(Y,10);
+%[cY,mY,vY] = motion_metrics(Y,10);
 [cM1,mM1,vM1] = motion_metrics(M1,10);
 [cM2,mM2,vM2] = motion_metrics(M2,10);
-T = length(cY);
+%T = length(cY);
 
 
 %% Plot metrics:
+%{
+nnY = quantile(M2.Y(:,:,:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
+mmY = quantile(M2.Y(:,:,:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
+
+
 f1 = figure;
     ax1 = subplot(2,3,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
-    ax2 = subplot(2,3,2); imagesc(mM1,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
-    ax3 = subplot(2,3,3); imagesc(mM2,[nnY,mmY]); axis equal; axis tight; axis off; title('mean non-rigid corrected','fontsize',14,'fontweight','bold')
-    subplot(2,3,4); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold')
-    subplot(2,3,5); scatter(cY,cM1); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
+    ax2 = subplot(2,2,2); imagesc(mM1,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
+    ax3 = subplot(2,2,3); imagesc(mM2,[nnY,mmY]); axis equal; axis tight; axis off; title('mean non-rigid corrected','fontsize',14,'fontweight','bold')
+    subplot(2,2,4); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold')
+    subplot(2,2,5); scatter(cY,cM1); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
         xlabel('raw data','fontsize',14,'fontweight','bold'); ylabel('rigid corrected','fontsize',14,'fontweight','bold');
-    subplot(2,3,6); scatter(cM1,cM2); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
+    subplot(2,2,6); scatter(cM1,cM2); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
         xlabel('rigid corrected','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
     linkaxes([ax1,ax2,ax3],'xy')
 
@@ -195,7 +197,7 @@ f1 = figure;
 %% plot shifts        
 shifts_r = squeeze(cat(3,shifts1(:).shifts));
 shifts_nr = cat(ndims(shifts2(1).shifts)+1,shifts2(:).shifts);
-shifts_nr = reshape(shifts_nr,[],ndims(Y)-1,T); % DDK 2017-09-30: ndims(Y) and T won't be defined for longer movies not loaded into memory
+shifts_nr = reshape(shifts_nr,[],ndims(M2)-1,T); % DDK 2017-09-30: ndims(Y) and T won't be defined for longer movies not loaded into memory
 shifts_x = squeeze(shifts_nr(:,1,:))';
 shifts_y = squeeze(shifts_nr(:,2,:))';
 
@@ -224,11 +226,8 @@ nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
 saveastiff(M2, nrmcTifName);
 %}
 
-%{
+
 % Assemble motion metrics into a struct and save as .mat
-MM.Uncorrected.CorrCoeffs = cY;
-MM.Uncorrected.MeanImg = mY;
-MM.Uncorrected.Gradient = vY;
 MM.Rigid.CorrCoeffs = cM1;
 MM.Rigid.MeanImg = mM1;
 MM.Rigid.Gradient = vM1;
@@ -238,6 +237,7 @@ MM.Nonrigid.Gradient = vM2;
 metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
 save(metricsName, 'MM');
 
+%{
 % Save figures:
 fig1name = [cd filesep 'motion_metrics_fig1' dtstr '.fig'];
 fig2name = [cd filesep 'motion_metrics_fig2' dtstr '.fig'];
