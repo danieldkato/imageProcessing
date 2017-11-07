@@ -21,6 +21,16 @@
 
 %% II. REQUIREMENTS:
 % 1) NoRMCorre, available at https://github.com/simonsfoundation/NoRMCorre
+
+%    *** IMPORTANT NOTE ***: if trying to read in a TIFF and write output
+%    to a memory-mapped .mat file, it will be necessary to either use the
+%    `tiff_2_memmap_mat` git branch of DDK's local clone of the NoRMCorre 
+%    repo (available at /mnt/nas2/homes/dan/code_libraries/NoRMCorre) or 
+%    apply certain bug fixes to normcorre.m and normcorre_batch.m. As is,
+%    NoRMCorre crashes when trying to read in a TIFF and write to a memory-mapped
+%    .mat file. For a description of the bug, see commit 187dfb0 on
+%    `tiff_2_memmap_mat` branch of DDK's local clone of the NoRMCorre repo.
+
 % 2) JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
 % 3) getLastCommit.m, available at https://github.com/danieldkato/utilities
 
