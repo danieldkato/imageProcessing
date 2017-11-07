@@ -41,17 +41,10 @@
 % 2) a .mat file of the non-rigid motion-corrected data
 % 3) a TIFF of the rigid motion-corrected data
 % 4) a TIFF of the non-rigid motion-corrected data
-% 5) a .mat file containing a struct including NoRMCorre's built-in motion
-%    metrics for the raw, rigid motion-corrected, and non-rigid
-%    motion-corrected data
-% 6) a .JSON metadata file including motion correction parameters and
-%    checksums for input files, output files, and software dependencies.
 
 
 %% TODO:
-% This code will have to be modified for longer movies that can't be loaded
-% into memory; currently, the code for plotting the motion metrics requires
-% that the raw data be loaded into the workspace. 
+% 1) Save .mat files of motion metrics output.
 
 
 %% Load parameters:
@@ -224,10 +217,12 @@ f2 = figure;
 
 
 % Save motion-corrected movies as tiffs:
+%{
 rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
 saveastiff(M1, rmcTifName);
 nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
 saveastiff(M2, nrmcTifName);
+%}
 
 %{
 % Assemble motion metrics into a struct and save as .mat
