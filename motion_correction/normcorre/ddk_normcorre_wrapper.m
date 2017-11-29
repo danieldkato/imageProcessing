@@ -215,13 +215,23 @@ if strcmp(do_rigid_char, 'true')
 end
 
 if do_rigid
+    % Create the options object:
     options_rigid = eval(set_r_params_str);
     options_rigid.mem_filename = rmc_name;
-    tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc % do the motion correction
-    [cM1,mM1,vM1] = motion_metrics(M1,10); % compute motion metrics
+    
+    % Do the motion correction using the options object we just created:
+    tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc 
+    
+    % Compute motion metrics:
+    [cM1,mM1,vM1] = motion_metrics(M1,10); 
+    
+    % Save the motion metrics to a struct:
+    MM.Rigid.CorrCoeffs = cM1;
+    MM.Rigid.MeanImg = mM1;
+    MM.Rigid.Gradient = vM1;
 end
 
-%% Now try non-rigid motion correction (also in parallel):
+%% Now try non-rigid motion correction (also in parallel) if specified by the user:
 
 do_nonrigid = false;
 do_nonrigid_char = S.params.do_nonrigid;
@@ -230,10 +240,20 @@ if strcmp(do_nonrigid_char, 'true')
 end
 
 if do_nonrigid
+    % Create the options object:
     options_nonrigid = eval(set_nr_params_str);
     options_nonrigid.mem_filename = nrmc_name;
+    
+    % Do the motion correction using the options object we just created:
     tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc % do the motion correction
-    [cM2,mM2,vM2] = motion_metrics(M2,10); % compute motion metrics
+    
+    % Compute motion metrics:
+    [cM2,mM2,vM2] = motion_metrics(M2,10); 
+    
+    %Save motion metrics to a struct:
+    MM.Nonrigid.CorrCoeffs = cM2;
+    MM.Nonrigid.MeanImg = mM2;
+    MM.Nonrigid.Gradient = vM2;
 end
 
 %% Compute metrics:
@@ -295,13 +315,7 @@ saveastiff(M2, nrmcTifName);
 %}
 
 
-% Assemble motion metrics into a struct and save as .mat
-%MM.Rigid.CorrCoeffs = cM1;
-%MM.Rigid.MeanImg = mM1;
-%MM.Rigid.Gradient = vM1;
-MM.Nonrigid.CorrCoeffs = cM2;
-MM.Nonrigid.MeanImg = mM2;
-MM.Nonrigid.Gradient = vM2;
+% Save motion metrics as .mat
 metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
 save(metricsName, 'MM');
 
