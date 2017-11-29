@@ -311,12 +311,6 @@ if do_nonrigid
 end
 
 
-%% Compute metrics:
-
-
-
-
-
 %% Plot metrics *only if input type is .mat*. Otherwise, running motion_metrics() on the input movie will fail, and this is necessary for Eftykios' plots:
 
 if strcmp(input_type, '.mat')
@@ -372,14 +366,6 @@ end
 
     
 %% Save output:
-
-
-% Save motion-corrected movies as tiffs:
-%{
-
-
-%}
-
 
 % Save motion metrics as .mat
 metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
