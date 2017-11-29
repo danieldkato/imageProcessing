@@ -143,6 +143,8 @@ orig_dir = cd('motion_correction');
 % this BEFORE running normcorre_batch() so memory-mapped output files can
 % be saved to correct location:
 dirName = generate_mc_dir_name();
+disp(cd);
+disp(dirName);
 mkdir(dirName);
 cd(dirName);
 base = [cd filesep];
@@ -397,7 +399,7 @@ Metadata.outputs(end+1).path = metricsName;
 %% Save metadata:
 
 disp('Saving metadata...');
-Metadata.duration = toc(start);
+Metadata.duration = [num2str(toc(start)) ' seconds'];
 Metadata = write_metadata(Metadata, ['MC_metadata.json']);
 disp('... done saving metadata.');
 
