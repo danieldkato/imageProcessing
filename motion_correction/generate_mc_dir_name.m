@@ -35,7 +35,7 @@ ls = dir();
 mc_basename = 'motion_correction';
 
 % Get the names of all directories of the form 'motion_correction<num>':
-mc_directory_indices = arrayfun(@(x) strcmp(x.name(1:length(mc_basename)), mc_basename) & x.name > length(basename), ls); 
+mc_directory_indices = arrayfun(@(x) length(x.name) > length(mc_basename) && strcmp(x.name(1:length(mc_basename)), mc_basename), ls); 
 mc_directories = ls(mc_directory_indices);
 
 % Get numbers at end of directory names:
