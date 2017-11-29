@@ -117,7 +117,6 @@ function ddk_normcorre_wrapper(param_file_path)
 
 
 %% Load parameters:
-clear
 gcp;
 
 start = tic;
@@ -135,7 +134,7 @@ input_path = S.inputs{tiffIdx}.path;
 cd(input_dir);
 ls = dir();
 is_mc = arrayfun(@(x) strcmp(x.name, 'motion_correction'), ls);
-if isempty(find(b,1))
+if isempty(find(is_mc,1))
     mkdir('motion_correction');
 end
 orig_dir = cd('motion_correction');
@@ -183,6 +182,8 @@ Y = Y - min(Y(:));
 % from the parameters JSON file without having to change the code).
 
 nr_param_names = fieldnames(S.params.normcorre_params);
+disp('nr_param_names:');
+disp(nr_param_names);
 r_param_names = {'d1','d2','bin_width','max_shift','us_fac','output_type'};
 
 set_r_params_str = 'NoRMCorreSetParms(';
@@ -193,7 +194,7 @@ rigid_param_ctr = 0;
 for s = 1:length(nr_param_names)
     
     name = nr_param_names{s}; % get parameter name
-    val = S.params.normcorre_params(nr_param_names{s}); % get parameter value
+    val = S.params.normcorre_params.(name); % get parameter value
     
     % convert the value into a string:
     if isnumeric(val) && length(val) == 1
@@ -248,7 +249,7 @@ if do_rigid
     
     disp('Performing rigid motion correction...');
     
-    rmc_name = [base 'rigidMC_' dtstr];
+    rmc_name = [base 'rigidMC.mat'];
     
     % Create the options object:
     options_rigid = eval(set_r_params_str);
@@ -294,7 +295,7 @@ if do_nonrigid
     
     disp('Performing non-rigid motion correction...');
     
-    nrmc_name = [base 'nonrigidMC_' dtstr];
+    nrmc_name = [base 'nonrigidMC.mat'];
     
     % Create the options object:
     options_nonrigid = eval(set_nr_params_str);
@@ -388,16 +389,16 @@ end
 %% Save output:
 
 % Save motion metrics as .mat
-metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
+metricsName = [cd filesep 'motion_metrics.mat'];
 save(metricsName, 'MM');
-Metdata.outputs(end+1).path = metricsName;
+Metadata.outputs(end+1).path = metricsName;
 
 
 %% Save metadata:
 
 disp('Saving metadata...');
 Metadata.duration = toc(start);
-Metadata = write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
+Metadata = write_metadata(Metadata, ['MC_metadata.json']);
 disp('... done saving metadata.');
 
 cd(orig_dir);
