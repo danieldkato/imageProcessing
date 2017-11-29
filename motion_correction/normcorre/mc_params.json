@@ -22,8 +22,5 @@
 		"us_fac":50,
 		"output_type":"memmap"
 		}
-	},
-"outputs":{
-	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/5036-2/2017-09-18/site1/grab01/2P/"
 	}
 }
