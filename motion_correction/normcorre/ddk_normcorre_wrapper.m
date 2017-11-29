@@ -6,7 +6,7 @@
 % III. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-11-07
+% last updated DDK 2017-11-29
 
 
 %% I. OVERVIEW:
@@ -34,7 +34,7 @@
 %    github repository. 
 
 % 2) JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
-% 3) getLastCommit.m, available at https://github.com/danieldkato/utilities
+% 3) write_metadata.m, available at https://github.com/danieldkato/utilities
 
 
 %% III. INPUTS:
@@ -121,11 +121,7 @@ S = rmfield(S,'outputs');
 % Create a directory for this specific run of NoRMCorre; need to create
 % this BEFORE running normcorre_batch() so memory-mapped output files can
 % be saved to correct location:
-t = now;
-dstr = datestr(t, 'yyyy-mm-dd');
-tstr = datestr(t, 'HH:MM:SS');
-dtstr = strrep([dstr '_' tstr],':','-');
-dirName = ['mc_output_' dtstr];
+dirName = generate_mc_dir_name();
 mkdir(dirName);
 old = cd(dirName);
 
@@ -234,6 +230,8 @@ if do_rigid
     
     % Append names of outputs to Metadata struct:
     Metadata.outputs(end+1).path = rmc_name;
+    
+    %
 end
 
 
@@ -350,7 +348,7 @@ Metdata.outputs(end+1).path = metricsName;
 %% Save metadata:
 
 disp('Saving metadata...');
-write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
+Metadata = write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
 disp('... complete.');
 
 cd(old);
