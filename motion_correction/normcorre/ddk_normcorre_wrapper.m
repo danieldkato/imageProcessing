@@ -106,15 +106,16 @@ S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_cor
 % Get name of movie to be motion-corrected (necessary for larger movies that can't be loaded
 % into memory):
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
-input_name = S.inputs{tiffIdx}.path; 
+input_path = S.inputs{tiffIdx}.path; 
+[input_dir input_name input_type] = fileparts(input_path);
 
 % Get SHA1 digest of input file:
 if ispc
-    [status, cmdout] = system(['fciv.exe -sha1 ' input_name]);
+    [status, cmdout] = system(['fciv.exe -sha1 ' input_path]);
 elseif isunix
-    [status, cmdout] = system(['sha1sum ' input_name]);
+    [status, cmdout] = system(['sha1sum ' input_path]);
 end
-S.inputs{tiffIdx}.sha1 = cmdout(end-length(input_name)-41:end-length(input_name)-2);
+S.inputs{tiffIdx}.sha1 = cmdout(end-length(input_path)-41:end-length(input_path)-2);
 
 % CD to motion correction directory:
 cd(S.outputs.output_directory)
@@ -220,7 +221,7 @@ if do_rigid
     options_rigid.mem_filename = rmc_name;
     
     % Do the motion correction using the options object we just created:
-    tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc 
+    tic; [M1,shifts1,template1] = normcorre(input_path,options_rigid); toc 
     
     % Compute motion metrics:
     [cM1,mM1,vM1] = motion_metrics(M1,10); 
@@ -230,6 +231,7 @@ if do_rigid
     MM.Rigid.MeanImg = mM1;
     MM.Rigid.Gradient = vM1;
 end
+
 
 %% Now try non-rigid motion correction (also in parallel) if specified by the user:
 
@@ -245,7 +247,7 @@ if do_nonrigid
     options_nonrigid.mem_filename = nrmc_name;
     
     % Do the motion correction using the options object we just created:
-    tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc % do the motion correction
+    tic; [M2,shifts2,template2] = normcorre_batch(input_path,options_nonrigid); toc % do the motion correction
     
     % Compute motion metrics:
     [cM2,mM2,vM2] = motion_metrics(M2,10); 
@@ -258,50 +260,59 @@ end
 
 %% Compute metrics:
 
-%[cY,mY,vY] = motion_metrics(Y,10);
 
 
-%T = length(cY);
 
 
-%% Plot metrics:
-%{
-nnY = quantile(M2.Y(:,:,:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
-mmY = quantile(M2.Y(:,:,:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
+%% Plot metrics only if input type is .mat (otherwise, running motion_metrics() on the input movie will fail, and this is necessary for Eftykios' plots):
+
+if strcmp(input_type, '.mat')
+
+    [cY,mY,vY] = motion_metrics(Y,10);
+    T = length(cY);
+    nnY = quantile(M2.Y(:,:,:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
+    mmY = quantile(M2.Y(:,:,:),0.995); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
 
 
-f1 = figure;
-    ax1 = subplot(2,3,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
-    ax2 = subplot(2,2,2); imagesc(mM1,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
-    ax3 = subplot(2,2,3); imagesc(mM2,[nnY,mmY]); axis equal; axis tight; axis off; title('mean non-rigid corrected','fontsize',14,'fontweight','bold')
-    subplot(2,2,4); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold')
-    subplot(2,2,5); scatter(cY,cM1); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
-        xlabel('raw data','fontsize',14,'fontweight','bold'); ylabel('rigid corrected','fontsize',14,'fontweight','bold');
-    subplot(2,2,6); scatter(cM1,cM2); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
-        xlabel('rigid corrected','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
-    linkaxes([ax1,ax2,ax3],'xy')
+    f1 = figure;
+        ax1 = subplot(2,3,1); imagesc(mY,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean raw data','fontsize',14,'fontweight','bold')
+        ax2 = subplot(2,2,2); imagesc(mM1,[nnY,mmY]);  axis equal; axis tight; axis off; title('mean rigid corrected','fontsize',14,'fontweight','bold')
+        ax3 = subplot(2,2,3); imagesc(mM2,[nnY,mmY]); axis equal; axis tight; axis off; title('mean non-rigid corrected','fontsize',14,'fontweight','bold')
+        subplot(2,2,4); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold')
+        subplot(2,2,5); scatter(cY,cM1); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
+            xlabel('raw data','fontsize',14,'fontweight','bold'); ylabel('rigid corrected','fontsize',14,'fontweight','bold');
+        subplot(2,2,6); scatter(cM1,cM2); hold on; plot([0.9*min(cY),1.05*max(cM1)],[0.9*min(cY),1.05*max(cM1)],'--r'); axis square;
+            xlabel('rigid corrected','fontsize',14,'fontweight','bold'); ylabel('non-rigid corrected','fontsize',14,'fontweight','bold');
+        linkaxes([ax1,ax2,ax3],'xy')
 
-    
-%% plot shifts        
-shifts_r = squeeze(cat(3,shifts1(:).shifts));
-shifts_nr = cat(ndims(shifts2(1).shifts)+1,shifts2(:).shifts);
-shifts_nr = reshape(shifts_nr,[],ndims(M2)-1,T); % DDK 2017-09-30: ndims(Y) and T won't be defined for longer movies not loaded into memory
-shifts_x = squeeze(shifts_nr(:,1,:))';
-shifts_y = squeeze(shifts_nr(:,2,:))';
 
-patch_id = 1:size(shifts_x,2);
-str = strtrim(cellstr(int2str(patch_id.')));
-str = cellfun(@(x) ['patch # ',x],str,'un',0);
+    %plot shifts        
+    shifts_r = squeeze(cat(3,shifts1(:).shifts));
+    shifts_nr = cat(ndims(shifts2(1).shifts)+1,shifts2(:).shifts);
+    shifts_nr = reshape(shifts_nr,[],ndims(M2)-1,T); % DDK 2017-09-30: ndims(Y) and T won't be defined for longer movies not loaded into memory
+    shifts_x = squeeze(shifts_nr(:,1,:))';
+    shifts_y = squeeze(shifts_nr(:,2,:))';
 
-f2 = figure;
-    ax1 = subplot(311); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold') % DDK 2017-09-30: T won't b defined for longer movies that can't be loaded into memory
-            set(gca,'Xtick',[]) 
-    ax2 = subplot(312); plot(shifts_x); hold on; plot(shifts_r(:,1),'--k','linewidth',2); title('displacements along x','fontsize',14,'fontweight','bold')
-            set(gca,'Xtick',[])
-    ax3 = subplot(313); plot(shifts_y); hold on; plot(shifts_r(:,2),'--k','linewidth',2); title('displacements along y','fontsize',14,'fontweight','bold')
-            xlabel('timestep','fontsize',14,'fontweight','bold')
-    linkaxes([ax1,ax2,ax3],'x')
-%}
+    patch_id = 1:size(shifts_x,2);
+    str = strtrim(cellstr(int2str(patch_id.')));
+    str = cellfun(@(x) ['patch # ',x],str,'un',0);
+
+    f2 = figure;
+        ax1 = subplot(311); plot(1:T,cY,1:T,cM1,1:T,cM2); legend('raw data','rigid','non-rigid'); title('correlation coefficients','fontsize',14,'fontweight','bold') % DDK 2017-09-30: T won't b defined for longer movies that can't be loaded into memory
+                set(gca,'Xtick',[]) 
+        ax2 = subplot(312); plot(shifts_x); hold on; plot(shifts_r(:,1),'--k','linewidth',2); title('displacements along x','fontsize',14,'fontweight','bold')
+                set(gca,'Xtick',[])
+        ax3 = subplot(313); plot(shifts_y); hold on; plot(shifts_r(:,2),'--k','linewidth',2); title('displacements along y','fontsize',14,'fontweight','bold')
+                xlabel('timestep','fontsize',14,'fontweight','bold')
+        linkaxes([ax1,ax2,ax3],'x')
+        
+    % Save figures:
+    fig1name = [cd filesep 'motion_metrics_fig1' dtstr '.fig'];
+    fig2name = [cd filesep 'motion_metrics_fig2' dtstr '.fig'];
+    savefig(f1, fig1name);
+    savefig(f2, fig2name);
+end
+
     
 %% Save output:
 
@@ -320,11 +331,7 @@ metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
 save(metricsName, 'MM');
 
 %{
-% Save figures:
-fig1name = [cd filesep 'motion_metrics_fig1' dtstr '.fig'];
-fig2name = [cd filesep 'motion_metrics_fig2' dtstr '.fig'];
-savefig(f1, fig1name);
-savefig(f2, fig2name);
+
 %}
 
 
