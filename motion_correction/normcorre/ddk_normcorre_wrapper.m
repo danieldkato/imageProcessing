@@ -235,12 +235,14 @@ disp(set_nr_params_str);
 
 %% Perform rigid motion correction if specified by user:
 
+% Determine whether user wants to do rigid motion correction:
 do_rigid = false;
 do_rigid_char = S.params.do_rigid;
 if strcmp(do_rigid_char, 'true')
     do_rigid = true;
 end
 
+% If requested by user, perform rigid motion correction:
 if do_rigid
     rmc_name = [base 'rigidMC_' dtstr];
     
@@ -274,12 +276,14 @@ end
 
 %% Now try non-rigid motion correction (also in parallel) if specified by the user:
 
+% Determine whether user has requested non-rigid motion correction:
 do_nonrigid = false;
 do_nonrigid_char = S.params.do_nonrigid;
 if strcmp(do_nonrigid_char, 'true')
     do_nonrigid = true;
 end
 
+% If requested by user, perform non-rigid motion correction:
 if do_nonrigid
     
     nrmc_name = [base 'nonrigidMC_' dtstr];
