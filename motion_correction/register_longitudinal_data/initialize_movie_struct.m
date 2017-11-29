@@ -11,6 +11,7 @@ for m = 1:n_movies
     details = whos(Movies(m).matfile);
     var_name = details(1).name;
     
+    Movies(m).var_name = var_name;
     Movies(m).n_frames = size(Movies(m).matfile.(var_name),3);
     Movies(m).n_chunks = ceil(Movies(m).n_frames/max_chunk_size);
     
