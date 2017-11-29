@@ -122,8 +122,8 @@
 clear
 gcp;
 
+start = tic;
 disp('Loading parameters...');
-
 S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
 % Get name of movie to be motion-corrected (necessary for larger movies
@@ -398,6 +398,7 @@ Metdata.outputs(end+1).path = metricsName;
 %% Save metadata:
 
 disp('Saving metadata...');
+Metadata.duration = toc(start);
 Metadata = write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
 disp('... done saving metadata.');
 
