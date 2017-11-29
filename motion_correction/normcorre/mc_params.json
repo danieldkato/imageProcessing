@@ -3,21 +3,26 @@
 "inputs":[
 		{
 		"input_name":"tiff_to_correct",
-		"path":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short/5036-2_short.tif"
+		"path":"/mnt/nas2/homes/dan/MultiSens/data/5036-2/2017-09-18/site1/grab01/2P/file_00004.tif"
 		}
 	],
 "params":{
-	"d1":512,
-	"d2":512,
-	"grid_size":[32,32],
-	"mot_uf":4,
-	"bin_width":50,
-	"max_shift":15,
-	"max_dev":3,
-	"us_fac":50,
-	"output_type":"memmap"
+	"do_nonrigid":"true",
+	"do_rigid":false,
+	"normcorre_params":{
+		"d1":512,
+		"d2":512,
+		"grid_size":[128,128],
+		"overlap_pre": [32,32],
+		"mot_uf":8,
+		"bin_width":50,
+		"max_shift":[20,20],
+		"max_dev":[4,4],
+		"us_fac":50,
+		"output_type":"memmap"
+		}
 	},
 "outputs":{
-	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short"
+	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/5036-2/2017-09-18/site1/grab01/2P/"
 	}
 }

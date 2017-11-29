@@ -30,6 +30,8 @@
 %    NoRMCorre crashes when trying to read in a TIFF and write to a memory-mapped
 %    .mat file. For a description of the bug, see commit 187dfb0 on
 %    `tiff_2_memmap_mat` branch of DDK's local clone of the NoRMCorre repo.
+%    This is ok for now, but I should open an issue on the main NoRMCorre
+%    github repository. 
 
 % 2) JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
 % 3) getLastCommit.m, available at https://github.com/danieldkato/utilities
@@ -101,7 +103,7 @@ gcp;
 
 S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
-% Get name of input file (necessary for larger files that can't be loaded
+% Get name of movie to be motion-corrected (necessary for larger movies that can't be loaded
 % into memory):
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 input_name = S.inputs{tiffIdx}.path; 
@@ -152,7 +154,7 @@ Y = Y - min(Y(:));
 % reason for this is that it allows the user to add or remove parameters
 % from the parameters JSON file without having to change the code).
 
-nr_param_names = fieldnames(S.params);
+nr_param_names = fieldnames(S.params.normcorre_params);
 r_param_names = {'d1','d2','bin_width','max_shift','us_fac','output_type'};
 
 set_r_params_str = 'NoRMCorreSetParms(';
@@ -163,7 +165,7 @@ rigid_param_ctr = 0;
 for s = 1:length(nr_param_names)
     
     name = nr_param_names{s}; % get parameter name
-    val = S.params.(nr_param_names{s}); % get parameter value
+    val = S.params.normcorre_params(nr_param_names{s}); % get parameter value
     
     % convert the value into a string:
     if isnumeric(val) && length(val) == 1
@@ -204,23 +206,41 @@ set_nr_params_str = [set_nr_params_str ')'];
 disp(set_nr_params_str);
 
 
-%% Perform rigid motion correction:
-options_rigid = eval(set_r_params_str);
-options_rigid.mem_filename = rmc_name;
-tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc
+%% Perform rigid motion correction if specified by user:
 
+do_rigid = false;
+do_rigid_char = S.params.do_rigid;
+if strcmp(do_rigid_char, 'true')
+    do_rigid = true;
+end
+
+if do_rigid
+    options_rigid = eval(set_r_params_str);
+    options_rigid.mem_filename = rmc_name;
+    tic; [M1,shifts1,template1] = normcorre(input_name,options_rigid); toc % do the motion correction
+    [cM1,mM1,vM1] = motion_metrics(M1,10); % compute motion metrics
+end
 
 %% Now try non-rigid motion correction (also in parallel):
-options_nonrigid = eval(set_nr_params_str);
-options_nonrigid.mem_filename = nrmc_name;
-tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc
 
+do_nonrigid = false;
+do_nonrigid_char = S.params.do_nonrigid;
+if strcmp(do_nonrigid_char, 'true')
+    do_nonrigid = true;
+end
+
+if do_nonrigid
+    options_nonrigid = eval(set_nr_params_str);
+    options_nonrigid.mem_filename = nrmc_name;
+    tic; [M2,shifts2,template2] = normcorre_batch(input_name,options_nonrigid); toc % do the motion correction
+    [cM2,mM2,vM2] = motion_metrics(M2,10); % compute motion metrics
+end
 
 %% Compute metrics:
 
 %[cY,mY,vY] = motion_metrics(Y,10);
-[cM1,mM1,vM1] = motion_metrics(M1,10);
-[cM2,mM2,vM2] = motion_metrics(M2,10);
+
+
 %T = length(cY);
 
 
@@ -276,9 +296,9 @@ saveastiff(M2, nrmcTifName);
 
 
 % Assemble motion metrics into a struct and save as .mat
-MM.Rigid.CorrCoeffs = cM1;
-MM.Rigid.MeanImg = mM1;
-MM.Rigid.Gradient = vM1;
+%MM.Rigid.CorrCoeffs = cM1;
+%MM.Rigid.MeanImg = mM1;
+%MM.Rigid.Gradient = vM1;
 MM.Nonrigid.CorrCoeffs = cM2;
 MM.Nonrigid.MeanImg = mM2;
 MM.Nonrigid.Gradient = vM2;
@@ -293,21 +313,26 @@ savefig(f1, fig1name);
 savefig(f2, fig2name);
 %}
 
+
+%% Save metadata:
+
+
+
 % Compute and save checksums for output files:
-P(1).fieldName = 'rigid_mc_mat';
-P(1).file = rmcMatName;
-P(2).fieldName = 'nonrigid_mc_mat';
-P(2).file = nrmcMatName;
-P(3).fieldName = 'rigid_mc_tiff';
-P(3).file = rmcTifName;
-P(4).fieldName = 'nonrigid_mc_tiff';
-P(4).file = nrmcTifName;
-P(5).fieldName = 'motion_metrics';
-P(5).file = metricsName;
-P(6).fieldName = 'motion_metrics_fig1';
-P(6).file = fig1name;
-P(7).fieldName = 'motion_metrics_fig2';
-P(7).file = fig2name;
+%P(1).fieldName = 'rigid_mc_mat';
+%P(1).file = rmcMatName;
+P(1).fieldName = 'nonrigid_mc_mat';
+P(1).file = nrmcMatName;
+%P(3).fieldName = 'rigid_mc_tiff';
+%P(3).file = rmcTifName;
+P(2).fieldName = 'nonrigid_mc_tiff';
+P(2).file = nrmcTifName;
+P(3).fieldName = 'motion_metrics';
+P(3).file = metricsName;
+%P(4).fieldName = 'motion_metrics_fig1';
+%P(4).file = fig1name;
+%P(5).fieldName = 'motion_metrics_fig2';
+%P(5).file = fig2name;
 
 disp('Computing output file checksums...');
 for i = 1:length(P)
