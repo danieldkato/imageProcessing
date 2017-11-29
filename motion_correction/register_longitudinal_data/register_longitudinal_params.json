@@ -1,0 +1,11 @@
+{"movies_to_load":[
+	{"path":"/mnt/nas2/homes/dan/im1.mat",
+	"variable_name":"im1"},
+	{"path":"/mnt/nas2/homes/dan/im2.mat",
+	"variable_name":"im2"},
+	{"path":"/mnt/nas2/homes/dan/im3.mat",
+	"variable_name":"im3"}
+			],
+"max_chunk_size":200,
+"output_name":"/mnt/nas2/homes/dan/concat.mat"
+}
