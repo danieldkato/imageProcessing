@@ -1,5 +1,4 @@
-% ddk_normcorre_wrapper.m:
-
+function ddk_normcorre_wrapper(param_file_path)
 %% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
 % II. REQUIREMENTS
@@ -10,7 +9,7 @@
 
 
 %% I. OVERVIEW:
-% This script is a wrapper for the Simons Foundations' NoRMCorre
+% This function is a wrapper for the Simons Foundations' NoRMCorre
 % motion-correction package. In addition to running motion correction on an
 % input movie, it saves to secondary storage the motion-corrected movie in
 % a format specified by the user (see NoRMCorre documentation for options),
@@ -40,9 +39,8 @@
 
 
 %% III. INPUTS:
-% This script is not a function and has no formal inputs, but requires the
-% user to specify a path to a parameters .json file in the code below (see
-% comments). Example contents of such a file might be as follows:
+% 1) param_file_path - path to a parameters .json file. Example contents of
+%    such a file might be as follows:
 
 % {
 % "description":"Motion correction of raw imaging data using NoRMCorre non-rigid motion correction algorithm.",
@@ -87,8 +85,8 @@
 
 
 %% IV. OUTPUT:
-% This script is not a function and has no formal return, but saves the
-% following to secondary storage:
+% This function and has no formal return, but saves the following to
+% secondary storage:
 
 % 1) A file of the rigid motion-corrected data. The format of this output
 %    file is determined by the `output_type` field of the parameters file.
@@ -123,8 +121,8 @@ clear
 gcp;
 
 start = tic;
-disp('Loading parameters...');
-S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
+disp('Loading parameters... ');
+S = loadjson(param_file_path); % specify parameters file here
 
 % Get name of movie to be motion-corrected (necessary for larger movies
 % that can't be loaded into memory):
