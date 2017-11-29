@@ -109,13 +109,10 @@ tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs
 input_path = S.inputs{tiffIdx}.path; 
 [input_dir input_name input_type] = fileparts(input_path);
 
-% Get SHA1 digest of input file:
-if ispc
-    [status, cmdout] = system(['fciv.exe -sha1 ' input_path]);
-elseif isunix
-    [status, cmdout] = system(['sha1sum ' input_path]);
-end
-S.inputs{tiffIdx}.sha1 = cmdout(end-length(input_path)-41:end-length(input_path)-2);
+% Initialize metadata struct:
+Metadata.inputs(1).path = input_path;
+Metadata.params = S.params;
+Metadata.outputs = [];
 
 % CD to motion correction directory:
 cd(S.outputs.output_directory)
@@ -133,8 +130,8 @@ mkdir(dirName);
 old = cd(dirName);
 
 base = [cd filesep];
-rmc_name = [base 'rigidMC_' dtstr];
-nrmc_name = [base 'nonrigidMC_' dtstr];
+
+
 
 % Code for loading input movie into memory; commenting out because this
 % will not work for large movies
@@ -145,6 +142,7 @@ Y = single(Y);                 % convert to single precision
 T = size(Y,ndims(Y));
 Y = Y - min(Y(:));
 %}
+
 
 
 %% set parameters (first try out rigid motion correction)
@@ -216,6 +214,9 @@ if strcmp(do_rigid_char, 'true')
 end
 
 if do_rigid
+    
+    rmc_name = [base 'rigidMC_' dtstr];
+    
     % Create the options object:
     options_rigid = eval(set_r_params_str);
     options_rigid.mem_filename = rmc_name;
@@ -230,6 +231,9 @@ if do_rigid
     MM.Rigid.CorrCoeffs = cM1;
     MM.Rigid.MeanImg = mM1;
     MM.Rigid.Gradient = vM1;
+    
+    % Append names of outputs to Metadata struct:
+    Metadata.outputs(end+1).path = rmc_name;
 end
 
 
@@ -242,6 +246,9 @@ if strcmp(do_nonrigid_char, 'true')
 end
 
 if do_nonrigid
+    
+    nrmc_name = [base 'nonrigidMC_' dtstr];
+    
     % Create the options object:
     options_nonrigid = eval(set_nr_params_str);
     options_nonrigid.mem_filename = nrmc_name;
@@ -256,7 +263,11 @@ if do_nonrigid
     MM.Nonrigid.CorrCoeffs = cM2;
     MM.Nonrigid.MeanImg = mM2;
     MM.Nonrigid.Gradient = vM2;
+    
+    % Append names of outputs to Metadata struct:
+    Metadata.outputs(end+1).path = nrmc_name;
 end
+
 
 %% Compute metrics:
 
@@ -311,6 +322,10 @@ if strcmp(input_type, '.mat')
     fig2name = [cd filesep 'motion_metrics_fig2' dtstr '.fig'];
     savefig(f1, fig1name);
     savefig(f2, fig2name);
+    
+    % Append figures to Metadata:
+    Metadata.outputs(end+1).path = fig1name;
+    Metadata.outputs(end+1).path = fig2name;
 end
 
     
@@ -329,86 +344,13 @@ saveastiff(M2, nrmcTifName);
 % Save motion metrics as .mat
 metricsName = [cd filesep 'motion_metrics_' dtstr '.mat'];
 save(metricsName, 'MM');
-
-%{
-
-%}
+Metdata.outputs(end+1).path = metricsName;
 
 
 %% Save metadata:
 
-
-
-% Compute and save checksums for output files:
-%P(1).fieldName = 'rigid_mc_mat';
-%P(1).file = rmcMatName;
-P(1).fieldName = 'nonrigid_mc_mat';
-P(1).file = nrmcMatName;
-%P(3).fieldName = 'rigid_mc_tiff';
-%P(3).file = rmcTifName;
-P(2).fieldName = 'nonrigid_mc_tiff';
-P(2).file = nrmcTifName;
-P(3).fieldName = 'motion_metrics';
-P(3).file = metricsName;
-%P(4).fieldName = 'motion_metrics_fig1';
-%P(4).file = fig1name;
-%P(5).fieldName = 'motion_metrics_fig2';
-%P(5).file = fig2name;
-
-disp('Computing output file checksums...');
-for i = 1:length(P)
-    fname = P(i).file;
-    
-    tic;
-    if ispc
-        [status, cmdout] = system(['fciv.exe -sha1 ' fname]);
-    elseif isunix
-        [status, cmdout] = system(['sha1sum ' fname]);
-    end
-    
-    sha1 = cmdout(end-length(fname)-41:end-length(fname)-2);
-    disp([num2str(i) ' out of ' num2str(length(P)) ' checksums complete.']);
-    toc;
-    
-    S.outputs(i).output_name = P(i).fieldName;
-    S.outputs(i).path = fname;
-    S.outputs(i).sha1 = sha1;
-end
-
-% Add a few miscellaneous fields to metadata structure:
-S.date = dstr;
-S.time = tstr;
-[err, hname] = system('hostname');
-S.host_name = strtrim(hname);
-S.notes = '';
-
-% Find software dependencies and get version information where available:
-disp('Retrieiving software dependencies...')
-ST = dbstack('-completenames');
-S.code.main_script.path = ST(1).file;
-[warn, latestCommit] = getLastCommit(S.code.main_script.path);
-S.code.main_script.lastCommit = latestCommit;
-if ~isempty(warn)
-    S.code.main_script.warnings = strtrim(warn);
-end
-Deps = inmem('-completenames');
-Deps = Deps(cellfun(@(x) ~contains(x,matlabroot), Deps)); % filter out core MATLAB functions - there would be way too many (>600!)
-Deps = Deps(cellfun(@(x) ~contains(x,'pathdef.m') & ~contains(x,mfilename), Deps)); % filter out this script and pathdef.m
-for d = 1:length(Deps)
-    clear warn
-    S.code.dependencies(d).path = Deps{d};
-    [warn, latestCommit] = getLastCommit(Deps{d});
-    S.code.dependencies(d).lastCommit = latestCommit;
-    if ~isempty(warn)
-        S.code.dependencies(d).warnings = strtrim(warn);
-    end
-end
-disp('... complete.');
-
 disp('Saving metadata...');
-
-% Save metadata:
-savejson('', S, ['MC_metadata_' dtstr '.json']);
+write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
 disp('... complete.');
 
 cd(old);
