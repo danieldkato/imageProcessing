@@ -41,7 +41,7 @@ mc_directories = ls(mc_directory_indices);
 % Get numbers at end of directory names:
 nums = arrayfun(@(x) x.name(length(mc_basename):end), mc_directories, 'UniformOutput', false);
 
-max = 1;
+max = 0;
 
 for n = 1:length(nums)
     val = str2double(nums{n});
