@@ -39,7 +39,7 @@ mc_directory_indices = arrayfun(@(x) length(x.name) > length(mc_basename) && str
 mc_directories = ls(mc_directory_indices);
 
 % Get numbers at end of directory names:
-nums = arrayfun(@(x) x.name(length(mc_basename):end), mc_directories, 'UniformOutput', false);
+nums = arrayfun(@(x) x.name(length(mc_basename)+1:end), mc_directories, 'UniformOutput', false);
 
 max = 0;
 
