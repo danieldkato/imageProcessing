@@ -103,8 +103,8 @@ gcp;
 
 S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
-% Get name of movie to be motion-corrected (necessary for larger movies that can't be loaded
-% into memory):
+% Get name of movie to be motion-corrected (necessary for larger movies
+% that can't be loaded into memory):
 tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs, 'UniformOutput', false)); 
 input_path = S.inputs{tiffIdx}.path; 
 [input_dir input_name input_type] = fileparts(input_path);
@@ -131,6 +131,15 @@ base = [cd filesep];
 Metadata.inputs(1).path = input_path;
 Metadata.params = S.params;
 Metadata.outputs = [];
+
+% Determine whether output should be saved as a tiff in addition to any
+% other format:
+save_tiff = false;
+save_tiff_char = S.params.save_tiff;
+if strcmp(save_tiff_char, 'true')
+    save_tiff = true;
+end
+
 
 % Code for loading input movie into memory; commenting out because this
 % will not work for large movies
@@ -212,7 +221,6 @@ if strcmp(do_rigid_char, 'true')
 end
 
 if do_rigid
-    
     rmc_name = [base 'rigidMC_' dtstr];
     
     % Create the options object:
@@ -233,7 +241,13 @@ if do_rigid
     % Append names of outputs to Metadata struct:
     Metadata.outputs(end+1).path = rmc_name;
     
-    %
+    % If specified by the user, save the output as a TIFF:
+    if save_tiff && ~(strcmp(S.params.normcorre_params.output_type, 'tif')||strcmp(S.params.normcorre_params.output_type, 'tiff'))
+        rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
+        saveastiff(M1, rmcTifName);
+        Metadata.outputs(end+1).path = rmcTifName;
+    end
+    
 end
 
 
@@ -266,6 +280,14 @@ if do_nonrigid
     
     % Append names of outputs to Metadata struct:
     Metadata.outputs(end+1).path = nrmc_name;
+    
+    % If specified by the user, save the output as a TIFF:
+    if save_tiff && ~(strcmp(S.params.normcorre_params.output_type, 'tif')||strcmp(S.params.normcorre_params.output_type, 'tiff'))
+        nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
+        saveastiff(M2, nrmcTifName);
+        Metadata.outputs(end+1).path = nrmcTifName;
+    end
+    
 end
 
 
@@ -334,10 +356,8 @@ end
 
 % Save motion-corrected movies as tiffs:
 %{
-rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
-saveastiff(M1, rmcTifName);
-nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
-saveastiff(M2, nrmcTifName);
+
+
 %}
 
 
