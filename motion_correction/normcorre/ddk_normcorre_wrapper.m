@@ -12,9 +12,10 @@
 %% I. OVERVIEW:
 % This script is a wrapper for the Simons Foundations' NoRMCorre
 % motion-correction package. In addition to running motion correction on an
-% input file, it saves .mat files of the motion-corrected data, a .mat file
-% of the motion metrics used to evaluate the quality of the motion
-% correction, and a metadata JSON file including motion correction
+% input movie, it saves to secondary storage the motion-corrected movie in
+% a format specified by the user (see NoRMCorre documentation for options),
+% a .mat file of the motion metrics used to evaluate the quality of the
+% motion correction, and a metadata JSON file including motion correction
 % parameters and version information for input files, output files, and
 % software dependencies.
 
