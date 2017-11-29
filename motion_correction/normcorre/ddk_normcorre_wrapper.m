@@ -109,25 +109,28 @@ tiffIdx = cell2mat(cellfun(@(x) strcmp(x.input_name,'tiff_to_correct'), S.inputs
 input_path = S.inputs{tiffIdx}.path; 
 [input_dir input_name input_type] = fileparts(input_path);
 
-% Initialize metadata struct:
-Metadata.inputs(1).path = input_path;
-Metadata.params = S.params;
-Metadata.outputs = [];
-
-% CD to motion correction directory:
-cd(S.outputs.output_directory)
-S = rmfield(S,'outputs');
+% Determine whether a directory called 'motion_correction' exists in the
+% directory where the input movie is saved, and if not, create it:
+cd(input_dir);
+ls = dir();
+is_mc = arrayfun(@(x) strcmp(x.name, 'motion_correction'), ls);
+if isempty(find(b,1))
+    mkdir('motion_correction');
+end
+orig_dir = cd('motion_correction');
 
 % Create a directory for this specific run of NoRMCorre; need to create
 % this BEFORE running normcorre_batch() so memory-mapped output files can
 % be saved to correct location:
 dirName = generate_mc_dir_name();
 mkdir(dirName);
-old = cd(dirName);
-
+cd(dirName);
 base = [cd filesep];
 
-
+% Initialize metadata struct:
+Metadata.inputs(1).path = input_path;
+Metadata.params = S.params;
+Metadata.outputs = [];
 
 % Code for loading input movie into memory; commenting out because this
 % will not work for large movies
@@ -138,7 +141,6 @@ Y = single(Y);                 % convert to single precision
 T = size(Y,ndims(Y));
 Y = Y - min(Y(:));
 %}
-
 
 
 %% set parameters (first try out rigid motion correction)
@@ -351,7 +353,7 @@ disp('Saving metadata...');
 Metadata = write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
 disp('... complete.');
 
-cd(old);
+cd(orig_dir);
 
 
 %% plot a movie with the results
