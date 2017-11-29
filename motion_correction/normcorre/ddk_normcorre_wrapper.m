@@ -35,6 +35,7 @@
 
 % 2) JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
 % 3) write_metadata.m, available at https://github.com/danieldkato/utilities
+% 4) generate_mc_dir_name.m, availalbe at https://github.com/danieldkato/imageProcessing/blob/master/motion_correction/generate_mc_dir_name.m
 
 
 %% III. INPUTS:
@@ -51,19 +52,21 @@
 %		}
 %	],
 % "params":{
-%	"d1":512,
-%	"d2":512,
-%	"grid_size":[32,32],
-%	"mot_uf":4,
-%	"bin_width":50,
-%	"max_shift":15,
-%	"max_dev":3,
-%	"us_fac":50,
-%	"output_type":"memmap"
+%	"do_nonrigid":"true",
+%    "do_rigid":"false",
+%    "save_tiff":"false",
+%    "normcorre_params":{
+%        "d1":512,
+%       "d2":512,
+%       "grid_size":[32,32],
+%       "mot_uf":4,
+%       "bin_width":50,
+%       "max_shift":15,
+%       "max_dev":3,
+%       "us_fac":50,
+%       "output_type":"memmap"
+%        }
 %	},
-%"outputs":{
-%	"output_directory":"/mnt/nas2/homes/dan/MultiSens/data/test_movies/5036-2_short"
-%	}
 %}
 
 % Note that at the moment, this script assumes that the input file is 1)
@@ -86,10 +89,27 @@
 % This script is not a function and has no formal return, but saves the
 % following to secondary storage:
 
-% 1) a .mat file of the rigid motion-corrected data
-% 2) a .mat file of the non-rigid motion-corrected data
-% 3) A .mat files of motion metrics output (see NoRMCorre
+% 1) A file of the rigid motion-corrected data. The format of this output
+%    file is determined by the `output_type` field of the parameters file.
+
+% 2) A .mat file of motion metrics output (see NoRMCorre
 %    documentation for more detail on motion metrics).
+
+% Optionally, depending on the user-specified parameters and the format of
+% the inputs and outputs, this fucntion may also save:
+
+% 3) A TIFF of the motion-corrected movies. This is specified by the
+%    `save_tiff` field of the params file. If set to "true", then even if
+%    "output_type" is not set to "tif", then this script will *additionally*
+%    save the output as a TIFF. Note, however, that this is extremely
+%    time-consuming and not necessary for all subsequent analyses, so it's
+%    probably best to keep "false". If "output_type" is set to "tif", then
+%    this option has no effect.
+
+% 4) Figures of the motion metrics. This will only be plotted if the input
+%    movie is a .mat file. The reason for this is that Eftykios' plots require
+%    running motion_metrics() on the input movie, and this seems to fail if
+%    the input movie is a TIFF.
 
 
 %% TODO:
@@ -297,7 +317,7 @@ end
 
 
 
-%% Plot metrics only if input type is .mat (otherwise, running motion_metrics() on the input movie will fail, and this is necessary for Eftykios' plots):
+%% Plot metrics *only if input type is .mat*. Otherwise, running motion_metrics() on the input movie will fail, and this is necessary for Eftykios' plots:
 
 if strcmp(input_type, '.mat')
 
