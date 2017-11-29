@@ -17,11 +17,11 @@
 % a .mat file of the motion metrics used to evaluate the quality of the
 % motion correction, and a metadata JSON file including motion correction
 % parameters and version information for input files, output files, and
-% software dependencies.
+% software dependencies. 
 
 
 %% II. REQUIREMENTS:
-% 1) NoRMCorre, available at https://github.com/simonsfoundation/NoRMCorre
+% 1) The MATLAB package NoRMCorre, available at https://github.com/simonsfoundation/NoRMCorre
 
 %    *** IMPORTANT NOTE ***: if trying to read in a TIFF and write output
 %    to a memory-mapped .mat file, it will be necessary to either use the
@@ -34,9 +34,9 @@
 %    This is ok for now, but I should open an issue on the main NoRMCorre
 %    github repository. 
 
-% 2) JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
-% 3) write_metadata.m, available at https://github.com/danieldkato/utilities
-% 4) generate_mc_dir_name.m, availalbe at https://github.com/danieldkato/imageProcessing/blob/master/motion_correction/generate_mc_dir_name.m
+% 2) The MATLAB toolbox JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
+% 3) The MATLAB function write_metadata.m, available at https://github.com/danieldkato/utilities
+% 4) The MATLAB function generate_mc_dir_name.m, availalbe at https://github.com/danieldkato/imageProcessing/blob/master/motion_correction/generate_mc_dir_name.m
 
 
 %% III. INPUTS:
@@ -122,6 +122,8 @@
 clear
 gcp;
 
+disp('Loading parameters...');
+
 S = loadjson('/mnt/nas2/homes/dan/code_libraries/ddk_image_processing/motion_correction/normcorre/mc_params.json'); % specify parameters file here
 
 % Get name of movie to be motion-corrected (necessary for larger movies
@@ -161,6 +163,7 @@ if strcmp(save_tiff_char, 'true')
     save_tiff = true;
 end
 
+disp('... done loading parameters.');
 
 % Code for loading input movie into memory; commenting out because this
 % will not work for large movies
@@ -244,6 +247,9 @@ end
 
 % If requested by user, perform rigid motion correction:
 if do_rigid
+    
+    disp('Performing rigid motion correction...');
+    
     rmc_name = [base 'rigidMC_' dtstr];
     
     % Create the options object:
@@ -271,6 +277,8 @@ if do_rigid
         Metadata.outputs(end+1).path = rmcTifName;
     end
     
+    disp('... done performing rigid motion correction.');
+    
 end
 
 
@@ -285,6 +293,8 @@ end
 
 % If requested by user, perform non-rigid motion correction:
 if do_nonrigid
+    
+    disp('Performing non-rigid motion correction...');
     
     nrmc_name = [base 'nonrigidMC_' dtstr];
     
@@ -313,6 +323,8 @@ if do_nonrigid
         Metadata.outputs(end+1).path = nrmcTifName;
     end
     
+    disp(' ... done performing non-rigid motion correction.');
+    
 end
 
 
@@ -320,6 +332,8 @@ end
 
 if strcmp(input_type, '.mat')
 
+    disp('Plotting motion metrics...');
+    
     [cY,mY,vY] = motion_metrics(Y,10);
     T = length(cY);
     nnY = quantile(M2.Y(:,:,:),0.005); % DDK 2017-09-30: this won't work for larger movies that we can't load into memory; maybe use the mean image instead?
@@ -367,6 +381,9 @@ if strcmp(input_type, '.mat')
     % Append figures to Metadata:
     Metadata.outputs(end+1).path = fig1name;
     Metadata.outputs(end+1).path = fig2name;
+
+    disp('... done plotting motion metrics.');
+    
 end
 
     
@@ -382,7 +399,7 @@ Metdata.outputs(end+1).path = metricsName;
 
 disp('Saving metadata...');
 Metadata = write_metadata(Metadata, ['MC_metadata_' dtstr '.json']);
-disp('... complete.');
+disp('... done saving metadata.');
 
 cd(orig_dir);
 
