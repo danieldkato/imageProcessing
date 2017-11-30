@@ -1,5 +1,43 @@
 function stitch_temp_files(Movies, Chunks, output_path)
+%% DOCUMENTATION TABLE OF CONTENTS:
+% I. OVERVIEW
+% II. REQUIREMENTS
+% III. INPUTS
+% IV. OUTPUTS
 
+% last updated DDK 2017-11-29
+
+%% I. OVERVIEW:
+% This function stitches together the transformed image data in the struct
+% array Chunks into a single .mat file. 
+
+
+%% II. REQUIREMENTS:
+% None
+
+
+%% III. INPUTS:
+% 1) Movies - 1 x m struct array where each element represents a movie to be
+%    concatenated. For more detail on how this should be formatted, see the
+%    OUTPUTS section of the documentation for initialize_movie_struct.m.
+
+% 2) Chunks - 1 x c array of structs where each element represents a single
+%    chunk of the concatenated data. For more detail on how this should be
+%    formatted, see the OUTPUTS section of the documentation for
+%    apply_transforms.m. 
+
+% 3)
+
+
+%% IV. OUTPUTS:
+% This function has no formal return, but saves to secondary storage a .mat
+% file containing an m x n x t matrix of registered and concatenated image
+% data, where m is the width of the reference movie in pixels, n is the
+% height of the reference movie in pixels, and t is the sum of the number
+% of frames across all movies. 
+
+
+%%
 n_frames_total = sum([Movies.n_frames]);
 ref_img = Movies(1).mean_img;
 

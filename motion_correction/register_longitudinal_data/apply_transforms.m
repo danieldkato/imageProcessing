@@ -1,4 +1,56 @@
 function Chunks = apply_transforms(Movies, mask)
+%% DOCUMENTATION TABLE OF CONTENTS:
+% I. OVERVIEW
+% II. REQUIREMENTS
+% III. INPUTS
+% IV. OUTPUTS
+
+% last updated DDK 2017-11-29
+
+%% I. OVERVIEW:
+% This function goes through each element of the struct array Movies,
+% splits up the corresponding movie into chunks, then applies the
+% transformation for the corresponding movie to each chunk in parallel.
+
+
+%% II. REQUIREMENTS:
+% 1) The MATLAB Parallel Computing toolbox
+
+
+%% III. INPUTS:
+% 1) Movies - 1 x m struct array where each element represents a movie to be
+%    concatenated. For more detail on how this should be formatted, see the
+%    OUTPUTS section of the documentation for initialize_movie_struct.m.
+
+% 2) mask - m x n binary matrix specifying which pixels to clip, where m is
+%    the width of the reference movie in pixels and n is the height of the
+%    reference movie in pixels. For more detail, see the OUTPUTS section of
+%    the documentation for get_movie_transformations.m.
+
+
+%% IV. OUTPUTS:
+% 1) Chunks - 1 x c array of structs where each element represents a single
+%    chunk of the concatenated data. Each element includes the following
+%    fields:
+
+%   a) movie_number - int specifying the number of the movie corresponding to the chunk
+%   
+%   b) chunk_within_movie - int specifying the order of the chunk within
+%   its corresponding movie (i.e. Chunks(c).chunk_within_movie = n iff
+%   chunk c is the n-th chunk in its corresponding movie)
+
+%   c) start_frame - int specifying the frame at which the chunk starts
+%   relative to the first frame of its corresponding movie
+
+%   d) end_frame - int specifying the frame at which the chunk ends
+%   relative to the first frame of its corresponding movie
+
+%   e) n_frames_in_chunk - int specifying the number of frames in the chunk
+
+%   f) mfile - matfile object linked to a temporary .mat file where the
+%      registered image data from the corresponding chunk will be stored
+
+
 %% Initialize struct array `Chunks` here (before passing it to parfor, or else it will raise an error):
 
 n_chunks = sum([Movies.n_chunks]);
