@@ -10,7 +10,7 @@ output.M = uint8(NaN(size(ref_img,1), size(ref_img,2), n_frames_total)); % initi
 % is the corresponding movie's start frame within the composite movie
 frameoffsets = cumsum([Movies.n_frames]) - [Movies.n_frames] + 1;
 
-for c = 1:n_chunks
+for c = 1:length(Chunks)
     
     movie_number = Chunks(c).movie_number; % get movie number corresponding to current chunk
     mfile = Chunks(c).mfile;
