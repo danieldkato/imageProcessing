@@ -26,7 +26,10 @@ for c = 1:n_chunks
     Chunks(c).chunk_within_movie = chunk_within_movie;  
     Chunks(c).start_frame = start_frame; 
     Chunks(c).end_frame = end_frame; 
-    Chunks(c).n_frames_in_chunk = n_frames_in_chunk;    
+    Chunks(c).n_frames_in_chunk = n_frames_in_chunk; 
+    
+    % Need to initialize some fields here or else parfor will throw an error:
+    Chunks(c).mfile = [];
 end
 
 
