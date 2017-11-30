@@ -1,7 +1,9 @@
 function stitch_temp_files(Movies, Chunks, output_path)
 
-output = matfile(output_path, 'Writable', true); % create master output file
 n_frames_total = sum([Movies.n_frames]);
+ref_img = Movies(1).mean_img;
+
+output = matfile(output_path, 'Writable', true); % create master output file
 output.M = uint8(NaN(size(ref_img,1), size(ref_img,2), n_frames_total)); % initialize variable within master output file
 
 % Create a 1 x m vector where m is the number of movies, and each element
