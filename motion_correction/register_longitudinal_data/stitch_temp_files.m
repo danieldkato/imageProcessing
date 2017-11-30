@@ -26,7 +26,8 @@ function stitch_temp_files(Movies, Chunks, output_path)
 %    formatted, see the OUTPUTS section of the documentation for
 %    apply_transforms.m. 
 
-% 3)
+% 3) output_path - char array specifying the name of the .mat file to which
+%    to save the registered and concatenated image data
 
 
 %% IV. OUTPUTS:
