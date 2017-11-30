@@ -2,6 +2,8 @@ function Chunks = apply_transforms(Movies, mask)
 %% Initialize struct array `Chunks` here (before passing it to parfor, or else it will raise an error):
 
 n_chunks = sum([Movies.n_chunks]);
+ref_img = Movies(1).mean_img;
+rfixed = imref2d(size(ref_img));
 
 % 1 x m vector where m is the number of movies, and each element is the
 % first chunk number corresponding to that movie:
