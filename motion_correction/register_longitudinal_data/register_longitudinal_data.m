@@ -7,15 +7,24 @@
 
 % last updated DDK 2017-11-29
 
-
 %% I. OVERVIEW:
+
 % This function concatenates multiple fluorescence movies of the same
 % imaging site into one long movie. It also transforms individual movies to
 % compensate for slight day-to-day translations and rotations between
 % movies.
 
+% The purpose of this is to pre-process longitudinal datasets for
+% activity-based segmentation alogrithms. These activity-based segmentation
+% algorithms must be run on the entirety of the longitudnial datasets in
+% order to yield accurate results; for example, if neuron N only becomes
+% active in the second imaging session, and you run the segmentation on the
+% first imaging session, then these activity-based segmentation algorithms
+% will fail to include neuron N in any of the movies. 
+
 
 %% II. REQUIREMENTS:
+
 % 1) The MATLAB Parallel Computing Toolbox
 % 2) The MATLAB toolbox JSONlab, available at https://www.mathworks.com/matlabcentral/fileexchange/33381-jsonlab--a-toolbox-to-encode-decode-json-files
 % 3) The MATLAB function write_metadata.m, available at https://github.com/danieldkato/utilities/blob/master/write_metadata.m
@@ -27,17 +36,24 @@
 
 
 %% III. INPUTS:
+
 % Currently none
 
 
 %% IV. OUTPUTS:
-% This function has no formal return, but saves to secondary storage a
-% .mat file containing the data from all input movies concatenated into
-% one long movie. In addition, it saves a metadata JSON file specifying
-% input and output paths and SHA1 checksums and parameters. 
+
+% This function has no formal return, but saves the following to secondary
+% storage:
+
+% 1) a .mat file containing the data from all input movies concatenated into
+%    one long movie. 
+
+% 2) a metadata JSON file specifying input and output paths and SHA1
+%    checksums and parameters.
 
 
 %% TODO:
+
 % 1) Make compatible with different input types (like TIFFs)
 % 2) Support different output type options
 
@@ -77,24 +93,17 @@ stitch_temp_files(Movies, Chunks, output_file_name);
 
 %% Write metadata:
 
-duration = toc;
-metadata_path = [output_directory filesep 'register_longitudinal_movies_metadata.json'];
-
 % define inputs:
 for m = 1:length(Movies)
     Metadata.inputs(m).path = movie_name_list{m};
 end
 
-% define parameters:
-Metadata.params.max_chunk_size = max_chunk_size;
-
-% define outputs:
-Metadata.outputs(1).path = output_file_name;
-
-% define miscellaneous other metadata:
-Metadata.duration = [num2str(duration) ' seconds'];
+Metadata.params.max_chunk_size = max_chunk_size; % define parameters:
+Metadata.outputs(1).path = output_file_name; % define outputs:
+Metadata.duration = [num2str(toc) ' seconds']; % define miscellaneous other metadata:
 
 % write metadata:
+metadata_path = [output_directory filesep 'register_longitudinal_movies_metadata.json'];
 write_metadata(Metadata, metadata_path);
 
 % For each chunk, get a filename, chunk size, corresponding movie number,
