@@ -7,5 +7,6 @@
 	"variable_name":"im3"}
 			],
 "max_chunk_size":200,
+"save_tiff":"true",
 "output_name":"/mnt/nas2/homes/dan/concat.mat"
 }
