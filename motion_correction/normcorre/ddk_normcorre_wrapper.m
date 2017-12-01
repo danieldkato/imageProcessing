@@ -272,7 +272,7 @@ if do_rigid
     Metadata.outputs(end+1).path = rmc_name;
     
     % If specified by the user, save the output as a TIFF:
-    if save_tiff && ~(strcmp(S.params.normcorre_params.output_type, 'tif')||strcmp(S.params.normcorre_params.output_type, 'tiff'))
+    if save_tiff && S.params.normcorre_params.output_type == 'mat'
         rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
         saveastiff(M1, rmcTifName);
         Metadata.outputs(end+1).path = rmcTifName;
@@ -318,7 +318,7 @@ if do_nonrigid
     Metadata.outputs(end+1).path = nrmc_name;
     
     % If specified by the user, save the output as a TIFF:
-    if save_tiff && ~(strcmp(S.params.normcorre_params.output_type, 'tif')||strcmp(S.params.normcorre_params.output_type, 'tiff'))
+    if save_tiff && S.params.normcorre_params.output_type == 'mat'
         nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
         saveastiff(M2, nrmcTifName);
         Metadata.outputs(end+1).path = nrmcTifName;
