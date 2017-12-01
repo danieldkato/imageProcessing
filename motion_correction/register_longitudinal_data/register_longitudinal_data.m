@@ -1,4 +1,4 @@
-% register_longitudinal_data
+function register_longitudinal_data(params_file)
 %% DOCUMENTATION TABLE OF CONTENTS:
 % I. OVERVIEW
 % II. REQUIREMENTS
@@ -37,7 +37,22 @@
 
 %% III. INPUTS:
 
-% Currently none
+% 1) char vector or String specifying path to a params file specifying the
+% movies to be concatenated along with concatentation parameters. Contents
+% of an example parameters might be as follows:
+
+%{"movies_to_load":[
+%	{"path":"/mnt/nas2/homes/dan/im1.mat",
+%	"variable_name":"im1"},
+%	{"path":"/mnt/nas2/homes/dan/im2.mat",
+%	"variable_name":"im2"},
+%	{"path":"/mnt/nas2/homes/dan/im3.mat",
+%	"variable_name":"im3"}
+%			],
+%"max_chunk_size":200,
+%"save_tiff":"false",
+%"output_name":"/mnt/nas2/homes/dan/concat.mat"
+%}
 
 
 %% IV. OUTPUTS:
