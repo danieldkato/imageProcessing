@@ -187,10 +187,10 @@ Y = Y - min(Y(:));
 %}
 
 % Get the extension based on the output type:
-if strcmp(S.params.output_type, 'tiff')
+if strcmp(S.params.normcorre_params.output_type, 'tiff')
     ext = 'tif';
 else
-    ext = S.params.output_type;
+    ext = S.params.normcorre_params.output_type;
 end
 
 
@@ -280,21 +280,27 @@ if do_rigid
     tic; [M1,shifts1,template1] = normcorre(input_path,options_rigid); toc 
     
     % Compute motion metrics:
-    [cM1,mM1,vM1] = motion_metrics(M1,10); 
-    
-    % Save the motion metrics to a struct:
-    MM.Rigid.CorrCoeffs = cM1;
-    MM.Rigid.MeanImg = mM1;
-    MM.Rigid.Gradient = vM1;
+    if strcmp(S.params.normcorre_params.output_type, 'mat') || strcmp(S.params.normcorre_params.output_type, 'memmap')
+        [cM1,mM1,vM1] = motion_metrics(M1,10); 
+
+        % Save the motion metrics to a struct:
+        MM.Rigid.CorrCoeffs = cM1;
+        MM.Rigid.MeanImg = mM1;
+        MM.Rigid.Gradient = vM1;
+    end
     
     % Append names of outputs to Metadata struct:
     Metadata.outputs(end+1).path = rmc_name;
     
     % If specified by the user, save the output as a TIFF:
-    if save_tiff && S.params.normcorre_params.output_type == 'mat'
-        rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
-        saveastiff(M1, rmcTifName);
-        Metadata.outputs(end+1).path = rmcTifName;
+    if save_tiff 
+        try
+            rmcTifName = [cd filesep 'rigidMC_' dtstr '.tif'];
+            saveastiff(M1, rmcTifName);
+            Metadata.outputs(end+1).path = rmcTifName;
+        catch
+            warning('Specified output type incompatible with saveastiff(); will not save output as TIFF.');
+        end
     end
     
     disp('... done performing rigid motion correction.');
@@ -326,21 +332,28 @@ if do_nonrigid
     tic; [M2,shifts2,template2] = normcorre_batch(input_path,options_nonrigid); toc % do the motion correction
     
     % Compute motion metrics:
-    [cM2,mM2,vM2] = motion_metrics(M2,10); 
+    if strcmp(S.params.normcorre_params.output_type, 'mat') || strcmp(S.params.normcorre_params.output_type, 'memmap')
+        [cM2,mM2,vM2] = motion_metrics(M2,10); 
+
+        %Save motion metrics to a struct:
+        MM.Nonrigid.CorrCoeffs = cM2;
+        MM.Nonrigid.MeanImg = mM2;
+        MM.Nonrigid.Gradient = vM2;
+    end
     
-    %Save motion metrics to a struct:
-    MM.Nonrigid.CorrCoeffs = cM2;
-    MM.Nonrigid.MeanImg = mM2;
-    MM.Nonrigid.Gradient = vM2;
     
     % Append names of outputs to Metadata struct:
     Metadata.outputs(end+1).path = nrmc_name;
     
     % If specified by the user, save the output as a TIFF:
-    if save_tiff && S.params.normcorre_params.output_type == 'mat'
-        nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
-        saveastiff(M2, nrmcTifName);
-        Metadata.outputs(end+1).path = nrmcTifName;
+    if save_tiff 
+        try
+            nrmcTifName = [cd filesep 'nonrigidMC_' dtstr '.tif'];
+            saveastiff(M2, nrmcTifName);
+            Metadata.outputs(end+1).path = nrmcTifName;
+        catch
+            warning('Specified output type incompatible with saveastiff(); will not save output as TIFF.');
+        end
     end
     
     disp(' ... done performing non-rigid motion correction.');
@@ -410,10 +423,11 @@ end
 %% Save output:
 
 % Save motion metrics as .mat
-metricsName = [cd filesep 'motion_metrics.mat'];
-save(metricsName, 'MM');
-Metadata.outputs(end+1).path = metricsName;
-
+if strcmp(S.params.normcorre_params.output_type, 'mat') || strcmp(S.params.normcorre_params.output_type, 'memmap')
+    metricsName = [cd filesep 'motion_metrics.mat'];
+    save(metricsName, 'MM');
+    Metadata.outputs(end+1).path = metricsName;
+end 
 
 %% Save metadata:
 
