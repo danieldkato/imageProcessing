@@ -1,11 +1,12 @@
 function ddk_normcorre_wrapper(param_file_path)
 %% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
-% II. REQUIREMENTS
-% III. INPUTS
+% II. USAGE
+% III. REQUIREMENTS
+% IV. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-11-29
+% last updated DDK 2017-12-01
 
 
 %% I. OVERVIEW:
@@ -19,7 +20,18 @@ function ddk_normcorre_wrapper(param_file_path)
 % software dependencies. 
 
 
-%% II. REQUIREMENTS:
+%% II. USAGE:
+
+% In addition to invoking this function in another MATLAB script or from
+% the MATLAB command line, it is possible to invoke this function from the
+% LINUX command line with the following:
+
+% matlab -nosplash -nodesktop -r "ddk_normcorre_wrapper </path/to/params>"
+
+% where <path/to/params> stands for the path to theinput parameters file.
+
+
+%% III. REQUIREMENTS:
 % 1) The MATLAB package NoRMCorre, available at https://github.com/simonsfoundation/NoRMCorre
 
 %    *** IMPORTANT NOTE ***: if trying to read in a TIFF and write output
@@ -38,7 +50,7 @@ function ddk_normcorre_wrapper(param_file_path)
 % 4) The MATLAB function generate_mc_dir_name.m, availalbe at https://github.com/danieldkato/imageProcessing/blob/master/motion_correction/generate_mc_dir_name.m
 
 
-%% III. INPUTS:
+%% IV. INPUTS:
 % 1) param_file_path - path to a parameters .json file. Example contents of
 %    such a file might be as follows:
 
@@ -84,7 +96,7 @@ function ddk_normcorre_wrapper(param_file_path)
 % https://github.com/danieldkato/analysis_code/blob/master/motion_correction/normcorre/mc_params.json
 
 
-%% IV. OUTPUT:
+%% V. OUTPUT:
 % This function and has no formal return, but saves the following to
 % secondary storage:
 
@@ -174,6 +186,13 @@ T = size(Y,ndims(Y));
 Y = Y - min(Y(:));
 %}
 
+% Get the extension based on the output type:
+if strcmp(S.params.output_type, 'tiff')
+    ext = 'tif';
+else
+    ext = S.params.output_type;
+end
+
 
 %% set parameters (first try out rigid motion correction)
 
@@ -251,7 +270,7 @@ if do_rigid
     
     disp('Performing rigid motion correction...');
     
-    rmc_name = [base 'rigidMC.mat'];
+    rmc_name = [base 'rigidMC.' ext];
     
     % Create the options object:
     options_rigid = eval(set_r_params_str);
@@ -297,7 +316,7 @@ if do_nonrigid
     
     disp('Performing non-rigid motion correction...');
     
-    nrmc_name = [base 'nonrigidMC.mat'];
+    nrmc_name = [base 'nonrigidMC.' ext];
     
     % Create the options object:
     options_nonrigid = eval(set_nr_params_str);
