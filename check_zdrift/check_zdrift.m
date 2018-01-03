@@ -15,7 +15,7 @@
 % occurred over the course of a movie. 
 
 % It does this by taking the 2-D correlation coefficient between the
-% average of the first 1000 frames and the aveerage of the last 1000
+% average of the first 1000 frames and the average of the last 1000
 % frames. In order to control for any differences that might arise from X-Y
 % translations, it first registers the images with the optimal 2D affine
 % transformation before computing the correlation coefficient.
@@ -218,6 +218,10 @@ if zstack_exists
     % CD to the z-stack directory:
     site_dir = cd('zstack');
     
+    % Load z-stack metadata:
+    z_metadata = loadjson('metadata.json');
+    step_size = z_metadata.stepSize;
+    
     % Get the name of the actual z-stack file:
     % TODO: deal with situations where there's more than one regexp match?
     % TODO: deal with situations where there's no regexp match?
@@ -229,12 +233,32 @@ if zstack_exists
     
     % Load and process Z-stack:
     Z_processed = process_zstack(zstack_name);
+    num_slices = size(Z_processed, 3);
     
+    % Correlate the average first image and average last image with each
+    % slice and find the most correlated slice for each:
+    r_avg_first = NaN(num_slices, 1);
+    r_avg_last_reg = NaN(num_slices, 1);
+    for s = 1:size(Z_processed,3)
+        r_avg_first(s) = corr2(avg_first, Z_processed(:,:,s));
+        r_avg_last_reg(s) = corr2(avg_last_reg, Z_processed(:,:,s));
+    end
+    [M1, z_avg_first] = max(r_avg_first);
+    [M2, z_avg_last_reg] = max(r_avg_last_reg);
+    
+    % Estimate the z-distance between the average first and average last image
+    z_distance = (z_avg_first - z_avg_last_reg) * step_size;
     
 end
+('... done.');
+
+% CD back to the movie directory:
+cd(movie_dir);
 
 
 %% Save outputs:
+
+('Saving outputs...');
 
 % Check if output directory exists, and if not, create it and cd into it:
 ls = dir();
@@ -253,6 +277,9 @@ D.sse = sse;
 D.beginning = avg_first_adjusted;
 D.end = avg_last_adjusted;
 D.diff_map = diff_map;
+D.beginning_slice = z_avg_first;
+D.end_slice = z_last_reg;
+D.z_distance = z_distance;
 save('zdrift.mat', 'D');
 
 % Save average images:
@@ -262,6 +289,7 @@ l_name = ['AVG_frames_' num2str(num_frames - 999) '-' num2str(num_frames) '_adju
 imwrite(avg_first_adjusted, f_name);
 imwrite(avg_last_adjusted, l_name);
 imwrite(diff_map, 'dif_map.tif');
+('... done.');
 
 
 %% Save metadata:
