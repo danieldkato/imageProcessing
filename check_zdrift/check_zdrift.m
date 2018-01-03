@@ -26,6 +26,9 @@
 % https://github.com/danieldkato/utilities/blob/master/metadata/MATLAB/write_metadata.m.
 % Note that this function itself has a few dependencies.
 
+% 2) The MATLAB function crop_translated.m, available at
+% https://github.com/danieldkato/imageProcessing/blob/master/check_zdrift/crop_translated.m
+
 
 %% III. USAGE
 % This function can be called form within another MATLAB script or from the
@@ -185,23 +188,13 @@ diff_map = avg_last_adjusted - avg_first_adjusted;
 diff_map = diff_map - min(min(diff_map));
 diff_map = diff_map/max(max(diff_map));
 
-%{
-corr_map = corr_map - min(min(corr_map));
-corr_map = corr_map/max(max(corr_map));
-%}
-
 %  Display images:
-figure();
+f1 = figure();
 imshow(avg_first_adjusted);
-figure();
+f2 = figure();
 imshow(avg_last_adjusted);
-figure();
+f3 = figure();
 imshow(diff_map);
-
-%{
-figure();
-imshow(corr_map);
-%}
 
 
 %% Try to register the mean images to the z-stack:
@@ -221,61 +214,21 @@ zstack_exists = ~isempty(cell2mat(is_zdir));
 
 % If zstack exists, try to register beginning and end average images to plane of z-stack:
 if zstack_exists
+    
+    % CD to the z-stack directory:
     site_dir = cd('zstack');
     
     % Get the name of the actual z-stack file:
+    % TODO: deal with situations where there's more than one regexp match?
+    % TODO: deal with situations where there's no regexp match?
     ls = dir();
     names = arrayfun(@(x) x.name, ls, 'UniformOutput', false);
     is_zstack = cellfun(@(c) ~isempty(regexp(c, 'file_[0-9]*.tif', 'ONCE')), names, 'UniformOutput', false);
-    
-    % TODO: deal with situations where there's more than one regexp match?
-    % TODO: deal with situations where there's no regexp match?
     z_idx = find(cell2mat(is_zstack)); 
     zstack_name = ls(z_idx).name;
     
-    % Get z-stack metadata:
-    z_metadata = loadjson('metadata.json'); 
-    % TODO: throw warning if metadata doesn't exist
-    % TODO: validate metadata
-    disp('Getting z-stack metadata...')
-    zinfo = imfinfo(zstack_name);
-    num_zframes = length(zinfo);
-    frames_per_slice = z_metadata.framesPerSlice;  
-    disp('... done.')
-    
-    % Load the z-stack image data:
-    disp('Loading z-stack image data...');
-    z_tiff = Tiff(zstack_name);
-    Z = NaN(zinfo(1).Height, zinfo(2).Width, num_zframes);
-    for slice = 1:num_zframes
-        z_tiff.setDirectory(slice);
-        Z(:,:,slice) = z_tiff.read(); 
-    end
-    disp('... done');
-    
-    % If the z-stack inclues more than one frame per slice, average together frames
-    % from each slice
-    ('Averaging frames from the same slice...');
-    if frames_per_slice > 1
-        if mod(num_zframes, frames_per_slice) == 0 % confirm that the recorded number of frames per slice divides evenly into the number of frames in the z-stack
-            
-            num_slices = num_zframes/frames_per_slice;
-            Z_avg = NaN(zinfo(1).Height, zinfo(2).Width, num_slices);
-            
-            ssi = frames_per_slice * ones(1, num_slices);
-            slice_start_indices = cumsum(ssi) - slices_per_frame + 1;
-            
-            for i = 1:length(slice_start_indices)
-                Z_avg(:,:,i) = mean(Z(:,:,slice_start_indices(i):start_slice_indices(i)+frames_per_slice-1),3);
-            end
-            
-            disp('... done');
-            
-        else
-            warn('Frames per slice must divide evenly into number of frames in z-stack; check that frames per slice recorded in z-stack metadata file is correct; skipping registration of average images to z-stack');
-        end
-        
-    end
+    % Load and process Z-stack:
+    Z_processed = process_zstack(zstack_name);
     
     
 end
@@ -319,10 +272,10 @@ Metadata.outputs(2).path = which(l_name);
 
 write_metadata(Metadata,'check_zdrift_metadata.json');
 
-cd('..');
 
-%{
-% Display images adjacent to each other;
-figure();
-imshowpair(avg_first, avg_last_reg, 'montage');
-%}
+%% close figures:
+close(f1);
+close(f2);
+close(f3);
+
+cd('..');
