@@ -139,17 +139,17 @@ rfixed = imref2d(size(avg_first));
 avg_last_reg = imwarp(avg_last, tform, 'OutputView', rfixed);
 
 % Crop any pixels that don't appear in both avg_first and avg_last_reg:
-[avg_first, avg_last_reg] = crop_translated(avg_first, avg_last_reg, tform);
+[avg_first_cropped, avg_last_reg_cropped, rows, cols] = crop_translated(avg_first, avg_last_reg, tform);
 
 
 %% Quantify overlap of mean images:
 
 % Find 2D correlation coefficient:
-r = corr2(avg_first, avg_last_reg);
+r = corr2(avg_first_cropped, avg_last_reg_cropped);
 disp(r);
 
 % Sum of squared errors:
-sse = sum(sum((avg_last_reg - avg_first).^2));
+sse = sum(sum((avg_last_reg_cropped - avg_first_cropped).^2));
 disp(sse);
 
 
@@ -175,12 +175,12 @@ corr_map = F_error.*L_error;
 %% Visualize images:
 
 % Adjust gray values to maximize dynamic range:
-Fmax = max(max(avg_first));
-avg_first_gray = avg_first/Fmax;
+Fmax = max(max(avg_first_cropped));
+avg_first_gray = avg_first_cropped/Fmax;
 avg_first_adjusted = imadjust(avg_first_gray);
 
-Lmax = max(max(avg_last_reg));
-avg_last_gray = avg_last_reg/Lmax;
+Lmax = max(max(avg_last_reg_cropped));
+avg_last_gray = avg_last_reg_cropped/Lmax;
 avg_last_adjusted = imadjust(avg_last_gray);
 
 % Visualize difference map:
@@ -240,8 +240,8 @@ if zstack_exists
     r_avg_first = NaN(num_slices, 1);
     r_avg_last_reg = NaN(num_slices, 1);
     for s = 1:size(Z_processed,3)
-        r_avg_first(s) = corr2(avg_first, Z_processed(:,:,s));
-        r_avg_last_reg(s) = corr2(avg_last_reg, Z_processed(:,:,s));
+        r_avg_first(s) = corr2(avg_first, Z_processed(rows, cols, s));
+        r_avg_last_reg(s) = corr2(avg_last_reg, Z_processed(rows, cols,s));
     end
     [M1, z_avg_first] = max(r_avg_first);
     [M2, z_avg_last_reg] = max(r_avg_last_reg);
@@ -294,11 +294,13 @@ imwrite(diff_map, 'dif_map.tif');
 
 %% Save metadata:
 
+%{
 Metadata.inputs(1).path = which(path);
 Metadata.outputs(1).path = which(f_name);
 Metadata.outputs(2).path = which(l_name);
 
 write_metadata(Metadata,'check_zdrift_metadata.json');
+%}
 
 
 %% close figures:

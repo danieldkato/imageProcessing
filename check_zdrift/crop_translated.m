@@ -1,4 +1,4 @@
-function [fixed, moving] = crop_translated(fixed, moving, tform)
+function [fixed, moving, rows, cols] = crop_translated(fixed, moving, tform)
 % DOCUMENTATION TOC:
 % I. OVERVIEW
 % II. REQUIREMENTS
@@ -37,6 +37,11 @@ function [fixed, moving] = crop_translated(fixed, moving, tform)
 % registered to the reference image), where m is the image height and n is
 % the image width
 
+% 3) rows - 1 x 2 vector specifying first and last row of original image
+% included in cropped image
+
+% 4) cols - 1 x 2 vector specifying first and last columns of original
+% image included in cropped image
 
 
 %%
@@ -76,6 +81,8 @@ elseif tform.T(3,2) <= 0
     last_row = height - ceil(abs(tform.T(3,2)));
 end
 
-
 fixed = fixed(first_row:last_row, first_col:last_col);
 moving = moving(first_row:last_row, first_col:last_col);
+
+rows = [first_row, last_row];
+cols = [first_col, last_col];
