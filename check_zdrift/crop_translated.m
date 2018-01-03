@@ -1,6 +1,4 @@
 function [fixed, moving] = crop_translated(fixed, moving, tform)
-
-
 % DOCUMENTATION TOC:
 % I. OVERVIEW
 % II. REQUIREMENTS
@@ -58,6 +56,9 @@ function [fixed, moving] = crop_translated(fixed, moving, tform)
 % shift down. A downward shift means we have to omit the first
 % ceil(tform.T(3,2)) rows. An upwards shift means we have to omit the last
 % ceil(tform.T(3,2)) rows.
+
+height = size(fixed, 1);
+width = size(fixed, 2);
 
 if tform.T(3,1) > 0 
     first_col = 1 + ceil(tform.T(3,1));
