@@ -126,7 +126,7 @@ avg_last = mean(L, 3);
 toc;
 
 
-%% Transform images to compensate for any XY drift:
+%% Transform average of last 1000 frames to compensate for any XY drift:
 
 % Find best 2D transform between avg_first and avg_last:
 tform = imregcorr(avg_last, avg_first);
@@ -135,44 +135,8 @@ tform = imregcorr(avg_last, avg_first);
 rfixed = imref2d(size(avg_first));
 avg_last_reg = imwarp(avg_last, tform, 'OutputView', rfixed);
 
-
-%% Crop padded pixels due to translation:
-
-% Recall that any translation will result in avg_last being padded with
-% 0's, which will artefactually affect the correlation between avg_last and
-% avg_first. We should omit these pixels from the correlation. To find the
-% translation, look to the last row of the T field of the affine2d object
-% tform. 
-
-% Specifically, tform.T(3,1) is the horizontal translation, where a
-% positive value means a shift to the right. A rightward shift means we
-% have to omit the first ceil(tform.T(3,1)) columns. A leftward shift means
-% we have to omit the last ceil(tform.T(3,1)) columns.
-
-% tform.T(3,2) is the vertical translation, where a positive value means a
-% shift down. A downward shift means we have to omit the first
-% ceil(tform.T(3,2)) rows. An upwards shift means we have to omit the last
-% ceil(tform.T(3,2)) rows.
-
-if tform.T(3,1) > 0 
-    first_col = 1 + ceil(tform.T(3,1));
-    last_col = width;
-elseif tform.T(3,1) <= 0
-    first_col = 1;
-    last_col = width - ceil(abs(tform.T(3,1)));
-end
-
-if tform.T(3,2) > 0 
-    first_row = 1 + ceil(tform.T(3,2));
-    last_row = height;
-elseif tform.T(3,2) <= 0
-    first_row = 1;
-    last_row = height - ceil(abs(tform.T(3,2)));
-end
-
-
-avg_first = avg_first(first_row:last_row, first_col:last_col);
-avg_last_reg = avg_last_reg(first_row:last_row, first_col:last_col);
+% Crop any pixels that don't appear in both avg_first and avg_last_reg:
+[avg_first, avg_last_reg] = crop_translated(avg_first, avg_last_reg, tform);
 
 
 %% Quantify overlap of mean images:
