@@ -79,7 +79,7 @@ if mod(num_zframes, frames_per_slice) == 0 % confirm that the recorded number of
         end_slice = slice_start_indices(i) + frames_per_slice - 1;
         for ii = start_slice:end_slice
             z_tiff.setDirectory(ii);
-            tmp(:,:,ii-start_slice+1) = Z_tiff.read();
+            tmp(:,:,ii-start_slice+1) = z_tiff.read();
         end
 
         Z_processed(:,:,i) = mean(tmp,3);
