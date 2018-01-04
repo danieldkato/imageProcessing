@@ -67,7 +67,7 @@ if mod(num_zframes, frames_per_slice) == 0 % confirm that the recorded number of
     Z_processed = NaN(zinfo(1).Height, zinfo(2).Width, num_slices);
 
     ssi = frames_per_slice * ones(1, num_slices);
-    slice_start_indices = cumsum(ssi) - slices_per_frame + 1;
+    slice_start_indices = cumsum(ssi) - frames_per_slice + 1;
 
     for i = 1:length(slice_start_indices)
 
