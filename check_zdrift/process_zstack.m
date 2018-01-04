@@ -45,7 +45,9 @@ frames_per_slice = z_metadata.framesPerSlice;
 disp('... done.')
   
 
-%% Load the z-stack image data:
+%% Create a Tiff object for the z-stack:
+z_tiff = Tiff(path);
+
 %{
 disp('Loading z-stack image data...');
 z_tiff = Tiff(path);
@@ -76,7 +78,7 @@ if mod(num_zframes, frames_per_slice) == 0 % confirm that the recorded number of
         start_slice = slice_start_indices(i);
         end_slice = slice_start_indices(i) + frames_per_slice - 1;
         for ii = start_slice:end_slice
-            Z_tiff.setDirectory(ii);
+            z_tiff.setDirectory(ii);
             tmp(:,:,ii-start_slice+1) = Z_tiff.read();
         end
 
