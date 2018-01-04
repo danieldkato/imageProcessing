@@ -65,6 +65,7 @@ function [fixed, moving, rows, cols] = crop_translated(fixed, moving, tform)
 height = size(fixed, 1);
 width = size(fixed, 2);
 
+%{
 if tform.T(3,1) > 0 
     first_col = 1 + ceil(tform.T(3,1));
     last_col = width;
@@ -79,6 +80,39 @@ if tform.T(3,2) > 0
 elseif tform.T(3,2) <= 0
     first_row = 1;
     last_row = height - ceil(abs(tform.T(3,2)));
+end
+%}
+
+rfixed = imref2d(height, width);
+mask = ones(height, width);
+mask_reg = imwarp(mask, tform, 'OutputView', rfixed);
+
+first_row = 0;
+last_row = height;
+for c = 1:width
+    uncropped = find(mask_reg(:,c) == 1);
+    
+    if min(uncropped) > first_row
+        first_row = min(uncropped);
+    end
+    
+    if max(uncropped) < last_row
+        last_row = max(uncropped);
+    end
+end
+
+first_col = 0;
+last_col = width;
+for r = 1:height
+    uncropped = find(mask_reg(r,:) == 1);
+    
+    if min(uncropped) > first_col
+        first_col = min(uncropped);
+    end
+    
+    if max(uncropped) < last_col
+        last_col = max(uncropped);
+    end
 end
 
 fixed = fixed(first_row:last_row, first_col:last_col);
