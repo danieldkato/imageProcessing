@@ -93,7 +93,10 @@ end
 
 fs = filesep;
 [dir, base, ext] = fileparts(output_basepath);
-
+if ~exist(dir)
+    mkdir(dir);
+end
+old = cd(dir);
 
 %% Get the movie dimensions and number of frames:
 disp('Getting input file info...');
@@ -111,9 +114,10 @@ disp('Creating output file...');
 if ~multiple_outputs
     Outputs(1).name = h5create(output_basepath, '/mov', [height*width num_frames]);    
 else
-    for n = 1:num_chunks
-        output_path = [dir fs base '_' num2str(n) ext];
-        Outputs(n).name = h5create(output_path, '/mov', [height*width num_frames]);    
+    for n = 1:n_chunks
+        Outputs(n).name = [base '_' num2str(n) ext];
+        disp(Outputs(n).name);
+        h5create(Outputs(n).name, '/mov', [height*width chunk_size]);    
     end
 end
 disp('... done');
@@ -136,9 +140,18 @@ for nn = 1:n_chunks
         curr_output_file = Outputs(1).name;
     end
     
-    disp(['Writing frames ' num2str((nn-1)*chunk_size+1) ' to ' num2str((nn-1)*chunk_size+curr_chunk_size) ' out of ' num2str(num_frames)]);
+    disp(['Vectorizing frames ' num2str((nn-1)*chunk_size+1) ' to ' num2str((nn-1)*chunk_size+curr_chunk_size) ' out of ' num2str(num_frames)]);
     
-    data = h5read(input_path, '/mov', [1 1 (n-1)*chunk_size+1], [height width curr_chunk_size]); % Read data from source
+    disp('    ... reading from input file...');
+    data = h5read(input_path, '/mov', [1 1 (nn-1)*chunk_size+1], [height width curr_chunk_size]); % Read data from source
+    
+    disp('    ... reshaping data...');
     data_reshaped = reshape(data, [height*width curr_chunk_size]); % Reshape
-    h5write(curr_output_file, '/mov', data_reshaped, start, [height*width curr_chunk_size]);
+    
+    disp('    ... writing to output file...');
+    h5write(curr_output_file, '/mov', data_reshaped, start, [height*width curr_chunk_size]); % Write data to output
 end
+
+disp('Done.');
+
+cd(old);
