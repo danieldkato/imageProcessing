@@ -6,7 +6,7 @@ function ddk_normcorre_wrapper(param_file_path)
 % IV. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2017-12-01
+% last updated DDK 2017-18-06
 
 
 %% I. OVERVIEW:
@@ -75,7 +75,7 @@ function ddk_normcorre_wrapper(param_file_path)
 %       "max_shift":15,
 %       "max_dev":3,
 %       "us_fac":50,
-%       "output_type":"memmap"
+%       "output_type":"hdf5"
 %        }
 %	},
 %}
@@ -186,11 +186,17 @@ T = size(Y,ndims(Y));
 Y = Y - min(Y(:));
 %}
 
-% Get the extension based on the output type:
+% Get the appropriate output file extension based on the output_type option:
 if strcmp(S.params.normcorre_params.output_type, 'tiff')
     ext = 'tif';
+    output_name_option = 'tiff_filename';
 else
-    ext = S.params.normcorre_params.output_type;
+    if strcmp(S.params.normcorre_params.output_type, 'hdf5')
+        ext = 'h5';
+    else
+        ext = S.params.normcorre_params.output_type;
+    end
+    output_name_option = [ext '_filename'];
 end
 
 
@@ -274,7 +280,7 @@ if do_rigid
     
     % Create the options object:
     options_rigid = eval(set_r_params_str);
-    options_rigid.mem_filename = rmc_name;
+    options_rigid.(output_name_option) = rmc_name;
     
     % Do the motion correction using the options object we just created:
     tic; [M1,shifts1,template1] = normcorre(input_path,options_rigid); toc 
@@ -326,7 +332,7 @@ if do_nonrigid
     
     % Create the options object:
     options_nonrigid = eval(set_nr_params_str);
-    options_nonrigid.mem_filename = nrmc_name;
+    options_nonrigid.(output_name_option) = nrmc_name;
     
     % Do the motion correction using the options object we just created:
     tic; [M2,shifts2,template2] = normcorre_batch(input_path,options_nonrigid); toc % do the motion correction
