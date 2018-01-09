@@ -86,7 +86,7 @@
 
 
 %% CD to directory of movie:
-[directory, name, ext] = fileparts(which(path));
+[directory, name, ext] = fileparts(path);
 cd(directory);
 
 
@@ -139,7 +139,7 @@ rfixed = imref2d(size(avg_first));
 avg_last_reg = imwarp(avg_last, tform, 'OutputView', rfixed);
 
 % Crop any pixels that don't appear in both avg_first and avg_last_reg:
-[avg_first_cropped, avg_last_reg_cropped, rows, cols] = crop_translated(avg_first, avg_last_reg, tform);
+[avg_first_cropped, avg_last_reg_cropped, rows, cols] = crop_transformed(avg_first, avg_last_reg, tform);
 
 
 %% Quantify overlap of mean images:
@@ -240,8 +240,8 @@ if zstack_exists
     r_avg_first = NaN(num_slices, 1);
     r_avg_last_reg = NaN(num_slices, 1);
     for s = 1:size(Z_processed,3)
-        r_avg_first(s) = corr2(avg_first, Z_processed(rows, cols, s));
-        r_avg_last_reg(s) = corr2(avg_last_reg, Z_processed(rows, cols,s));
+        r_avg_first(s) = corr2(avg_first_cropped, Z_processed(rows(1):rows(2), cols(1):cols(2), s));
+        r_avg_last_reg(s) = corr2(avg_last_reg_cropped, Z_processed(rows(1):rows(2), cols(1):cols(2),s));
     end
     [M1, z_avg_first] = max(r_avg_first);
     [M2, z_avg_last_reg] = max(r_avg_last_reg);
@@ -249,6 +249,9 @@ if zstack_exists
     % Estimate the z-distance between the average first and average last image
     z_distance = (z_avg_first - z_avg_last_reg) * step_size;
     
+    D.beginning_slice = z_avg_first;
+    D.end_slice = z_avg_last_reg;
+    D.z_distance = z_distance;
 end
 ('... done.');
 
@@ -277,9 +280,6 @@ D.sse = sse;
 D.beginning = avg_first_adjusted;
 D.end = avg_last_adjusted;
 D.diff_map = diff_map;
-D.beginning_slice = z_avg_first;
-D.end_slice = z_last_reg;
-D.z_distance = z_distance;
 save('zdrift.mat', 'D');
 
 % Save average images:
