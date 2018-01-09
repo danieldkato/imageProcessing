@@ -103,7 +103,7 @@ thresh_values <- -1*thresh_values
 print(thresh_values)
 
 # Perform scalpel step 1:
-step1out = scalpelStep1(step0Output=step0out,minSize=min_size,maxHeight=max_height,maxWidth=max_width,thresholdVec=thresh_values)
+step1out = scalpelStep1(step0Output=step0out,minSize=min_size,maxHeight=max_height,maxWidth=max_width)
 
 # Save step1out object in most recent Step1 directory:
 step1_indices = unlist(grepl("Step1",dir()))
