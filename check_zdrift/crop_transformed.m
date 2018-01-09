@@ -1,4 +1,4 @@
-function [fixed, moving, rows, cols] = crop_translated(fixed, moving, tform)
+function [fixed, moving, rows, cols] = crop_transformed(fixed, moving, tform)
 % DOCUMENTATION TOC:
 % I. OVERVIEW
 % II. REQUIREMENTS
@@ -83,7 +83,7 @@ elseif tform.T(3,2) <= 0
 end
 %}
 
-rfixed = imref2d(height, width);
+rfixed = imref2d(size(fixed));
 mask = ones(height, width);
 mask_reg = imwarp(mask, tform, 'OutputView', rfixed);
 
