@@ -1,4 +1,4 @@
-function reshape_and_split(varargin)
+function reformat(varargin)
 %% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
 % II. USAGE
@@ -6,31 +6,32 @@ function reshape_and_split(varargin)
 % IV. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2018-01-09
+% last updated DDK 2018-01-10
 
 
 %% I. OVERVIEW:
-% This function reformats an input movie in one or both of the following
+% This function reformats an input movie in any of the following
 % ways:
 
-% 1) splitting it up into multiple smaller movies, each saved in its own output file, and 
-% 2) vectorizing each frame as a wh-element vector, where w is the movie
-%    width in pixels and h is the movie height in pixels
+% 1) split it up into multiple smaller movies, each saved in its own output file 
+% 2) vectorize each frame as a wh-element vector, where w is the movie width in pixels and h is the movie height in pixels
+% 3) change the file type from .mat to .h5 or vice-versa
 
 
 %% II. USAGE:
 
-% In MATLAB, invoke this function with either of the following:
+% In MATLAB, invoke this function with any of the following:
 
-% reshape_and_split(input_path, output_path, chunk_size) - save to multiple outputs without vectorizing data
-% reshape_and_split(input_path, output_path, chunk_size, vectorize) - save to multiple outputs and vectorize data
-% reshape_and_split(input_path, output_path, ~, vectorize) - vectorize data and save to single output
+% reformat(input_path, output_path) - change file format by specifying different extensions for input_path and output_path
+% reformat(input_path, output_path, chunk_size) - split input file up into multiple files
+% reformat(input_path, output_path, [], vectorize) - vectorize frames
+% reformat(input_path, output_path, chunk_size, vectorize) - vectorize data and split into multiple files
 
 % In addition to invoking this function from another MATLAB script or from
 % the MATLAB command line, it is possible to invoke this function from the
 % LINUX command line with the following:
 
-% matlab -nosplash -nodesktop -r "reshape_and_split <input_path> <output_path> [<chunk_size>] [<multiple_outputs>]"
+% matlab -nosplash -nodesktop -r "reformat <input_path> <output_path> [<chunk_size>] [<multiple_outputs>]"
 
 
 %% III. REQUIREMENTS:
@@ -155,13 +156,13 @@ end
 % For each chunk... 
 for n = 1:n_chunks
 
-    disp(['Processing chuunk ' num2str(n) ' of ' num2str(n_cuhunks) ':']);
+    disp(['Processing chunk ' num2str(n) ' of ' num2str(n_chunks) ':']);
     
     % Define the output file name:
     if n_chunks == 1
-        name = output_base;        
+        Output(n).name = output_base;        
     else
-        name = [output_name '_' num2str(n) output_ext];
+        Outpt(n).name = [output_name '_' num2str(n) output_ext];
     end
     
     % Define the chunk_size:
@@ -182,10 +183,10 @@ for n = 1:n_chunks
     disp('    Creating output file...');
     % ... if the user has requested an HDF5... 
     if strcmp(output_ext, '.h5')
-        h5create(name, '/mov', output_dims);   
+        h5create(Output(n).name, '/mov', output_dims);   
     % ... if the user has requested a .mat... 
     elseif strcmp(output_ext, '.mat')
-        O = matfile(name,'Writable',true);
+        O = matfile(Output(n).name,'Writable',true);
         O.mov = int16(zeros(output_dims));
     end
     
@@ -215,18 +216,27 @@ for n = 1:n_chunks
         else
             start_pos = [1 1];
         end
-        h5write(name, '/mov', data, start_pos, output_dims); 
+        h5write(Output(n).name, '/mov', data, start_pos, output_dims); 
     elseif strcmp(output_ext, '.mat')
         if ~vectorize
             O.mov(:,:,1:curr_chunk_size) = data;
         else
             O.mov(:,1:curr_chunk_size) = data;
-        end
-        curr_output_file.mov() = data; 
+        end 
     end    
     
 end
 
 disp('Done.');
+
+
+%% Define and write metadata:
+Metadata.inputs(1).path = input_path;
+for m = 1:length(Outputs)
+       Metadata.inputs(m).path = Outputs(m).name;	
+end
+
+Metadata.parameters.chunk_size = chunk_size;
+Metadata.parameters.vectorize = vectorize;
 
 cd(old);
