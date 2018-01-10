@@ -1,4 +1,4 @@
-function fmt4scalpel_h5(varargin)
+function reshape_and_split(varargin)
 %% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
 % II. USAGE
@@ -6,30 +6,31 @@ function fmt4scalpel_h5(varargin)
 % IV. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2018-01-06
+% last updated DDK 2018-01-09
 
 
 %% I. OVERVIEW:
-% This function reshapes a w x h x f matrix of imaging data from an input
-% HDF5 file into a (w*h) x f matrix and saves it in another HDF5, where w
-% is the video width, h is the video height, and f is the number of frames.
-% This vectorized format is necessary for use with certain segmentation
-% algorithms such as SCALPEL.
+% This function reformats an input movie in one or both of the following
+% ways:
+
+% 1) splitting it up into multiple smaller movies, each saved in its own output file, and 
+% 2) vectorizing each frame as a wh-element vector, where w is the movie
+%    width in pixels and h is the movie height in pixels
 
 
 %% II. USAGE:
 
 % In MATLAB, invoke this function with either of the following:
 
-% fmt4scalpel_h5(input_path, output_path)
-% fmt4scalpel_h5(input_path, output_path, chunk_size)
-% fmt4scalpel_h5(input_path, output_path, chunk_size, multiple_outputs)
+% reshape_and_split(input_path, output_path, chunk_size) - save to multiple outputs without vectorizing data
+% reshape_and_split(input_path, output_path, chunk_size, vectorize) - save to multiple outputs and vectorize data
+% reshape_and_split(input_path, output_path, ~, vectorize) - vectorize data and save to single output
 
 % In addition to invoking this function from another MATLAB script or from
 % the MATLAB command line, it is possible to invoke this function from the
 % LINUX command line with the following:
 
-% matlab -nosplash -nodesktop -r "fmt4scalpel_h5 <input_path> <output_path> [<chunk_size>] [<multiple_outputs>]"
+% matlab -nosplash -nodesktop -r "reshape_and_split <input_path> <output_path> [<chunk_size>] [<multiple_outputs>]"
 
 
 %% III. REQUIREMENTS:
@@ -37,41 +38,45 @@ function fmt4scalpel_h5(varargin)
 
 
 %% IV. INPUTS:
-% 1) input_path - path to a file containing data to be vectorized. The
-% imaging data to be converted should be saved in a w x h x f dataset
-% called '/mov', where w is the width of the movie in pixels, h is the
-% height of the movie in pixels, and f is the number of frames in the
-% movie.
+% 1) input_path - path to an HDF5 or .mat file containing data to be
+% reformatted. The imaging data to be converted should be saved in a w x h
+% x f matrix, where w is the width of the movie in pixels, h is the height
+% of the movie in pixels, and f is the number of frames in the movie. If
+% the input file is an HDF5, this matrix should be saved in a dataset
+% called '/mov'. If the input file is a .mat, this matrix should be saved
+% in a variable called 'mov'.
 
-% 2) output_path - path where the output HDF5 file should be saved.  
+% 2) output_path - path where the output file should be saved. This can be
+% either an HDF5 or a .mat.
 
 % 3) chunk_size (optional) - integer specifying the number of frames to
-% read into memory at a time. Default value is 1000.
+% read into memory at a time. Default value is 1000. Set to [] to save the
+% output to one file.
 
-% 4) multiple_outputs (optional) - Boolean flag specifying whether to save
-% each chunk as a separate file (useful for several segmentation
-% algorithms).
+% 4) vectorize (optional) - Boolean flag specifying whether to vectorize
+% each frame. Default value is false.
 
 
 %% V. OUTPUT:
-% This function has no formal return, but saves to disk HDF5 files
-% containing vectorized imaging data. Within each HDF5 file, these data are
-% saved in a dataset called '/mov'.
+% This function has no formal return, but saves to disk one or more output
+% files. The file type of the outputs is determined by the extension in the
+% output_path argument, which can be either .h5 or .mat. The number of the
+% output files is determined by the chunk_size_argument, which specifies
+% the number of frames to be written in each output file. If chunk_size is
+% set to [], then all output will be written to one output file.
 
-% If multiple_outputs is set to false (the default behavior), then all of
-% the reshaped data will be saved in a single HDF5 file. The dataset '/mov'
-% will have the dimensions w*h x f, where w is the width of the movie in
-% pixels, h is the height of the movie in pixels, and f is the total number
-% of frames in the movie. The name of the file is just the specified output
-% path.
+% If the output is saved to multiple output files, the name of each file
+% will be a numbered version of the name specified in output_path. For
+% example, if output_path  is specified as `/data/processed/Y.h5', then the
+% output files will be named 'Y_1.h5', 'Y_2.h5', 'Y_3.h5', etc.
 
-% If multiple_outputs is set to true, then the reshaped data will be saved
-% in multiple HDF5 files. Within each file, the dataset '/mov' will have
-% the dimensions w*h x c, where w is the width of the movie in pixels, h is
-% the height of the movie in pixels, and c is the number of frames
-% specified in the chunk_size argument. If output_path is specified as
-% `/data/processed/Y.h5', then the output files will be named 'Y_1.h5',
-% 'Y_2.h5', 'Y_3.h5', etc.
+% If the output files are written as HDF5s, all data will be contained in a
+% dataset called '/mov'. If the output files are written as .mat files, all
+% data will be contained in a variable called mov.
+
+% If vectorize is set to true, then each frame will be stored as a
+% wh-element vector, where w is the movie width in pixels and h is the
+% movie height in pixels.
 
 
 %% TODO:
@@ -81,21 +86,31 @@ function fmt4scalpel_h5(varargin)
 
 
 %% Define parameters:
-input_path = varargin{1};
-output_base = varargin{2};
+
+% Define some defaults:
+chunk_size = 1000; % default chunk size
+multiple_outputs = true;
+vectorize = false;
+
+% Get user-defined parameters:
+
+input_path = varargin{1}; % input path
+output_base = varargin{2}; % output path
+
+% Determine whether to split output into multiple files, and if so, how many:
 if nargin > 2
     chunk_size = varargin{3};
-else
-    chunk_size = 1000; % default chunk size
+    if isempty(chunk_size)
+        multiple_outputs = false;
+    end
 end
+
+% Determine whether to vectorize each frame:
 if nargin > 3
-    multiple_outputs = varargin{4};
-else
-    multiple_outputs = false;
+    vectorize = varargin{4};
 end
 
-
-%% Get format of input and output files:
+% Get format of input and output files:
 [input_dir, input_base, input_ext] = fileparts(input_path);
 [output_dir, output_name, output_ext] = fileparts(output_base);
 
@@ -119,108 +134,97 @@ elseif strcmp(input_ext, '.mat')
     num_frames = size(I.mov,3); % assuming there's only one dataset; TODO; include code for when there are multiple datasets
 end
 
+if ~multiple_outputs 
+    chunk_size = num_frames;
+end
+
 disp('... done');
 
 
-
-%% Create output HDF5 objects and dataset:
+%% Process each chunk individually:
 
 % cd to directory where output files will be saved:
 old = cd(output_dir);
 
-disp(size(num_frames));
-disp(size(chunk_size));
-n_chunks = ceil(num_frames/chunk_size);
-
-disp('Creating output files...');
-% Setup output file if the user has requested only one output file... 
-if ~multiple_outputs
-    Outputs(1).name = output_base;
-    % ... if the user has requested an HDF5... 
-    if strcmp(output_ext, '.h5')    
-        h5create(Outputs(1).name, '/mov', [height*width num_frames]);    
-    % ... if the user has requested a .mat... 
-    elseif strcmp(output_ext, '.mat')
-        Outputs(1).matfile = matfile(Outputs(1).name,'Writable',true);
-        Outputs(1).matfile.mov = int16(zeros([height*width num_frames]));
-    end
-    
-% Setup output files if the user has requested multiple output files... 
+if multiple_outputs
+    n_chunks = ceil(num_frames/chunk_size);
 else
-    for n = 1:n_chunks
-
-        % Define the current chunk size (the last chunk may be less that chunk_size)
-        if n < n_chunks
-            curr_chunk_size = chunk_size;
-        else
-            curr_chunk_size = mod(num_frames, chunk_size);
-        end        
-        
-        Outputs(n).name = [output_name '_' num2str(n) output_ext];
-        disp(Outputs(n).name);
-        % ... if the user has requested an HDF5... 
-        if strcmp(output_ext, '.h5')
-            h5create(Outputs(n).name, '/mov', [height*width chunk_size]);   
-        % ... if the user has requested a .mat... 
-        elseif strcmp(output_ext, '.mat')
-            Outputs(n).matfile = matfile(Outputs(n).name,'Writable',true);
-            Outputs(n).matfile.mov = int16(zeros([height*width chunk_size]));
-        end
-    end
+    n_chunks = 1; 
 end
-disp('... done');
 
+% For each chunk... 
+for n = 1:n_chunks
 
-%% Reshape data and write to new HDF5 files:
-for nn = 1:n_chunks
+    disp(['Processing chuunk ' num2str(n) ' of ' num2str(n_cuhunks) ':']);
     
-    start_read_frame = (nn-1)*chunk_size+1; 
+    % Define the output file name:
+    if n_chunks == 1
+        name = output_base;        
+    else
+        name = [output_name '_' num2str(n) output_ext];
+    end
     
-    % Define the current chunk size (the last chunk may be less that chunk_size)
-    if nn < n_chunks || mod(num_frames, chunk_size) == 0
+    % Define the chunk_size:
+    if n < n_chunks || mod(num_frames, chunk_size) == 0
         curr_chunk_size = chunk_size;
     else
         curr_chunk_size = mod(num_frames, chunk_size);
-    end
+    end        
 
-    % Determine the current output file (depends on whether the user has requested one or multiple output files, and on requested output type):
-    if multiple_outputs 
-        start_write_frame = 1;
-        if strcmp(output_ext, '.h5')
-           curr_output_file = Outputs(nn).name;
-        elseif strcmp(output_ext, '.mat')
-           curr_output_file = Outputs(nn).matfile;
-        end
+    % Define the output dimensions:
+    if ~vectorize
+        output_dims = [height width curr_chunk_size];
     else
-        start_write_frame = start_read_frame;
-        if strcmp(output_ext, '.h5')
-          curr_output_file = Outputs(1).name;
-        elseif strcmp(output_ext, '.mat')
-          curr_output_file = Outputs(1).matfile;
-        end
+        output_dims = [height*width curr_chunk_size];
     end
     
-    disp(['Vectorizing frames ' num2str((nn-1)*chunk_size+1) ' to ' num2str((nn-1)*chunk_size+curr_chunk_size) ' out of ' num2str(num_frames)]);
+    % Create the output object:
+    disp('    Creating output file...');
+    % ... if the user has requested an HDF5... 
+    if strcmp(output_ext, '.h5')
+        h5create(name, '/mov', output_dims);   
+    % ... if the user has requested a .mat... 
+    elseif strcmp(output_ext, '.mat')
+        O = matfile(name,'Writable',true);
+        O.mov = int16(zeros(output_dims));
+    end
     
-    % Read data from source:
-    disp('    ... reading from input file...');
+    % Define start and stop read frames:
+    start_frame = (n-1)*chunk_size+1;
+    end_frame = start_frame + curr_chunk_size - 1;
+    
+    % Read in the data:
+    disp('    Reading input...');
     if strcmp(input_ext, '.h5')    
-        data = h5read(input_path, '/mov', [1 1 start_read_frame], [height width curr_chunk_size]); 
+        data = h5read(input_path, '/mov', [1 1 start_frame], [height width curr_chunk_size]); 
     elseif strcmp(input_ext, '.mat')
-        data = Outputs(nn).mat.mov(1:height, 1:width, start_read_frame:start_read_frame + curr_chunk_size - 1);
-    end
+        data = I.mov(1:height, 1:width, start_frame:end_frame);
+    end    
     
-    % Reshape data:
-    disp('    ... reshaping data...');
-    data_reshaped = reshape(data, [height*width curr_chunk_size]); 
+    % Re-shape data if requested by user:
+    if vectorize
+        disp('    Vectorizing frames...');
+        data = reshape(data, [height*width curr_chunk_size]);     
+    end
     
     % Write data to output:
-    disp(['    ... writing to  output file ' num2str(nn) '...']);
+    disp(['    Writing output...']);
     if strcmp(output_ext, '.h5')
-        h5write(curr_output_file, '/mov', data_reshaped, [1 start_write_frame], [height*width curr_chunk_size]); 
+        if ~vectorize
+            start_pos = [1 1 1];
+        else
+            start_pos = [1 1];
+        end
+        h5write(name, '/mov', data, start_pos, output_dims); 
     elseif strcmp(output_ext, '.mat')
-        curr_output_file.mov(:,start_write_frame:start_write_frame + curr_chunk_size -1) = data_reshaped; 
-    end
+        if ~vectorize
+            O.mov(:,:,1:curr_chunk_size) = data;
+        else
+            O.mov(:,1:curr_chunk_size) = data;
+        end
+        curr_output_file.mov() = data; 
+    end    
+    
 end
 
 disp('Done.');
