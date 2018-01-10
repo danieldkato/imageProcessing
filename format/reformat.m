@@ -25,7 +25,7 @@ function reformat(varargin)
 % reformat(input_path, output_path) - change file format by specifying different extensions for input_path and output_path
 % reformat(input_path, output_path, chunk_size) - split input file up into multiple files
 % reformat(input_path, output_path, [], vectorize) - vectorize frames
-% reformat(input_path, output_path, chunk_size, vectorize) - vectorize data and split into multiple files
+% reformat(input_path, output_path, chunk_size, vectorize) - vectorize data and split into multiple file 
 
 % In addition to invoking this function from another MATLAB script or from
 % the MATLAB command line, it is possible to invoke this function from the
@@ -238,5 +238,7 @@ end
 
 Metadata.parameters.chunk_size = chunk_size;
 Metadata.parameters.vectorize = vectorize;
+
+write_metadata(Metadata, 'reformat_metadata.json');
 
 cd(old);
