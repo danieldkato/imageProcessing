@@ -439,7 +439,7 @@ end
 
 disp('Saving metadata...');
 Metadata.duration = [num2str(toc(start)) ' seconds'];
-Metadata = write_metadata(Metadata, ['MC_metadata.json']);
+write_metadata(Metadata, 'MC_metadata.json');
 disp('... done saving metadata.');
 
 cd(orig_dir);
