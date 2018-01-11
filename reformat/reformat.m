@@ -160,9 +160,9 @@ for n = 1:n_chunks
     
     % Define the output file name:
     if n_chunks == 1
-        Output(n).name = output_base;        
+        Outputs(n).name = output_base;        
     else
-        Outpt(n).name = [output_name '_' num2str(n) output_ext];
+        Outputs(n).name = [output_name '_' num2str(n) output_ext];
     end
     
     % Define the chunk_size:
@@ -183,10 +183,10 @@ for n = 1:n_chunks
     disp('    Creating output file...');
     % ... if the user has requested an HDF5... 
     if strcmp(output_ext, '.h5')
-        h5create(Output(n).name, '/mov', output_dims);   
+        h5create(Outputs(n).name, '/mov', output_dims);   
     % ... if the user has requested a .mat... 
     elseif strcmp(output_ext, '.mat')
-        O = matfile(Output(n).name,'Writable',true);
+        O = matfile(Outputs(n).name,'Writable',true);
         O.mov = int16(zeros(output_dims));
     end
     
@@ -216,7 +216,7 @@ for n = 1:n_chunks
         else
             start_pos = [1 1];
         end
-        h5write(Output(n).name, '/mov', data, start_pos, output_dims); 
+        h5write(Outputs(n).name, '/mov', data, start_pos, output_dims); 
     elseif strcmp(output_ext, '.mat')
         if ~vectorize
             O.mov(:,:,1:curr_chunk_size) = data;
