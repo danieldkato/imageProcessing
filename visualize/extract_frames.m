@@ -66,7 +66,7 @@ function extract_frames(input_path, output_path, start_frame, end_frame)
 
 
 %%
-n_requested_frames = end_frame-start_frame;
+n_requested_frames = end_frame-start_frame+1;
 
 % Get input extension:
 [dirname_in, fname_in, input_ext] = fileparts(input_path);
@@ -81,6 +81,7 @@ if strcmp(input_ext, '.h5') || strcmp(input_ext, '.hdf5')
 end
 
 subset_dims = [height width n_requested_frames];
+disp(subset_dims);
 
 % Check that the requested number of frames doesn't exceed the length of the movie:
 if end_frame > n_frames_total
@@ -95,7 +96,7 @@ end
 % Save output frames:
 if strcmp(output_ext, '.h5')
     h5create(output_path, '/mov', subset_dims);
-    h5write(output_path, '/mov', [1 1 1], subset_dims);
+    h5write(output_path, '/mov', data, [1 1 1], subset_dims);
 elseif strcmp(output_ext, '.tif')
     data = int16(data);
     saveastiff(data, output_path);
