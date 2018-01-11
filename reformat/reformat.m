@@ -233,7 +233,7 @@ disp('Done.');
 %% Define and write metadata:
 Metadata.inputs(1).path = input_path;
 for m = 1:length(Outputs)
-       Metadata.inputs(m).path = Outputs(m).name;	
+       Metadata.outputs(m).path = Outputs(m).name;	
 end
 
 Metadata.parameters.chunk_size = chunk_size;
