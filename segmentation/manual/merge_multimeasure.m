@@ -95,7 +95,7 @@ end
 A = [];
 for c = 1:length(csvs)
     
-    disp(['Reading in data from file ' num2str(c) ' out of ' num2str(length(csvs)) '...']);
+    disp(['Reading in data from file ' num2str(c) ' out of ' num2str(length(csvs)) ' (' csvs(c).name ')...']);
     
     % Load the data from the .csv:
     num = xlsread(csvs(c).name);
