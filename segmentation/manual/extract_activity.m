@@ -71,7 +71,7 @@ csvs = ls(is_csv);
 %% Make sure that .csv files are ordered appropriately:
 
 % Try to retrieve the numbers contained in the filenames of any .csv files:
-filenum_labels = arrayfun(@(a) regexp(a.name, '[0-9]*', 'metch'), csvs, 'UniformOutput', false);
+filenum_labels = arrayfun(@(a) regexp(a.name, '[0-9]*', 'match'), csvs, 'UniformOutput', false);
 
 % If there are any un-numbered .csv files, throw an error:
 not_numbered = cellfun(@(c) isempty(c), filenum_labels);
@@ -83,13 +83,20 @@ end
 filenums = cellfun(@(c) str2double(c{:}), filenum_labels);
 [fnums_sorted, I] = sort(filenums); 
 csvs = csvs(I);
-disp(csvs.name);
+
+% Display the .csv file names in order to confirm that they are ordered
+% correctly:
+for c = 1:length(csvs)
+    disp(csvs(c).name);
+end
 
 
 %% Load the data from each .csv into activity matrix A: 
 A = [];
 for c = 1:length(csvs)
-
+    
+    disp(['Reading in data from file ' num2str(c) ' out of ' num2str(length(csvs)) '...']);
+    
     % Load the data from the .csv:
     num = xlsread(csvs(c).name);
 
@@ -121,21 +128,34 @@ end
 %% Write activity matrix A to secondary storage if requested by user:
 
 if nargin > 1
+    
+    disp('Writing data to secondary storage...');
+    
     % Get the specified file type:
     [output_dir, output_name, output_ext] = fileparts(output_path);
 
+    % Create the output directory if it doesn't exist:
+    if ~exist(output_dir, 'dir')
+        mkdir(output_dir)
+    end
+    
+    old = cd(output_dir);
+    
     % Save A as appropriate file type:
     if strcmp(output_ext, '.mat')
         save(output_path, 'A');
     elseif strcmp(output_ext, '.h5')
-        h5create(output_path, '/A', size(A));
-        h5write(output_path, '/A', A, [1 1], size(A));
+        %h5_name = [output_name output_ext];
+        h5create([output_name output_ext], '/A', size(A));
+        h5write([output_name output_ext], '/A', A, [1 1], size(A));
     end
     
     % Write metadata:
     for m = 1:length(csvs)
-        Metadata.inputs(m).path = csvs(m).name;
+        Metadata.inputs(m).path = fullfile(input_directory, csvs(m).name);
     end    
     Metadata.outputs(1).path = output_path;
     write_metadata(Metadata, 'activity_extraction_metadata.json');
+    
+    cd(old);
 end
