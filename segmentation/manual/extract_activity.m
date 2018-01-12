@@ -118,7 +118,7 @@ for c = 1:length(csvs)
     end
 
     % Extract the data from the relevant columns:
-    A_temp = num(read_indices)';
+    A_temp = num(:, read_indices)';
 
     % Append to overall data matrix:
     A = [A A_temp];
