@@ -1,4 +1,4 @@
-function A = extract_activity(input_directory, output_path)
+function A = merge_multimeasure(input_directory, output_path)
 % DOCUMENTATION TABLE OF CONTENTS:
 % I. OVERVIEW
 % II.REQUIREMENTS
