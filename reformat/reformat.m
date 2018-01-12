@@ -231,14 +231,17 @@ disp('Done.');
 
 
 %% Define and write metadata:
+disp('Writing metadata...')
 Metadata.inputs(1).path = input_path;
 for m = 1:length(Outputs)
-       Metadata.outputs(m).path = Outputs(m).name;	
+       Metadata.outputs(m).path = fullfile(output_dir, Outputs(m).name);	
 end
 
 Metadata.parameters.chunk_size = chunk_size;
 Metadata.parameters.vectorize = vectorize;
 
 write_metadata(Metadata, 'reformat_metadata.json');
+
+disp('... done.')
 
 cd(old);
