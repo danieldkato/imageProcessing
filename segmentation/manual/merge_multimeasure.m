@@ -155,7 +155,7 @@ if nargin > 1
         Metadata.inputs(m).path = fullfile(input_directory, csvs(m).name);
     end    
     Metadata.outputs(1).path = output_path;
-    write_metadata(Metadata, 'activity_extraction_metadata.json');
+    write_metadata(Metadata, 'merge_multimeasure_metadata.json');
     
     cd(old);
 end
