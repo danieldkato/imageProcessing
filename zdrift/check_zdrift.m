@@ -298,6 +298,7 @@ imwrite(diff_map, 'dif_map.tif');
 Metadata.inputs(1).path = which(path);
 Metadata.outputs(1).path = which(f_name);
 Metadata.outputs(2).path = which(l_name);
+Metadata.outputs(3).path = which('Zdrift.mat');
 
 write_metadata(Metadata,'check_zdrift_metadata.json');
 %}
