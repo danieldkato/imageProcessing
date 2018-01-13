@@ -179,15 +179,10 @@ for n = 1:n_chunks
         output_dims = [height*width curr_chunk_size];
     end
     
-    % Create the output object:
-    disp('    Creating output file...');
-    % ... if the user has requested an HDF5... 
+    % Create the output object if the user has requested an HDF5... 
     if strcmp(output_ext, '.h5')
-        h5create(Outputs(n).name, '/mov', output_dims);   
-    % ... if the user has requested a .mat... 
-    elseif strcmp(output_ext, '.mat')
-        O = matfile(Outputs(n).name,'Writable',true);
-        O.mov = int16(zeros(output_dims));
+   	 disp('    Creating output file...');
+   	 h5create(Outputs(n).name, '/mov', output_dims);   
     end
     
     % Define start and stop read frames:
@@ -218,11 +213,7 @@ for n = 1:n_chunks
         end
         h5write(Outputs(n).name, '/mov', data, start_pos, output_dims); 
     elseif strcmp(output_ext, '.mat')
-        if ~vectorize
-            O.mov(:,:,1:curr_chunk_size) = data;
-        else
-            O.mov(:,1:curr_chunk_size) = data;
-        end 
+        save(Outputs(n).name, 'data', '-v6')	
     end    
     
 end
