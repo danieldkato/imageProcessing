@@ -1,4 +1,4 @@
-function extract_frames(input_path, output_path, start_frame, end_frame)
+function data = extract_frames(input_path, start_frame, end_frame, output_path)
 %% DOCUMENTATION TABLE OF CONTENTS:      
 % I. OVERVIEW
 % II. USAGE
@@ -41,15 +41,15 @@ function extract_frames(input_path, output_path, start_frame, end_frame)
 % matrix should be saved in a dataset called '/mov'. If the input file is a
 % .mat, this matrix should be saved in a variable called 'mov'.
 
-% 2) output_path - path where the output file should be saved. This can be
-% specified either an HDF5 or a TIFF using the '.h5' or '.tif' extensions,
-% respectively.
-
-% 3) start_frame - integer specifying the first frame in the range of
+% 2) start_frame - integer specifying the first frame in the range of
 % frames to be extracted.
 
-% 4) end_frame - integer specifying the last frame in the range of frames
+% 3) end_frame - integer specifying the last frame in the range of frames
 % to be extracted.
+
+% 4) output_path (optional) - path where the output file should be saved. This can be
+% specified either an HDF5 or a TIFF using the '.h5' or '.tif' extensions,
+% respectively.
 
 
 %% V. OUTPUT:
@@ -62,7 +62,7 @@ function extract_frames(input_path, output_path, start_frame, end_frame)
 
 
 %% TODO:
-% 1) Add support for reading from .mat or TIFF
+% 1) Add support for reading from .mat
 
 
 %%
@@ -70,7 +70,6 @@ n_requested_frames = end_frame-start_frame+1;
 
 % Get input extension:
 [dirname_in, fname_in, input_ext] = fileparts(input_path);
-[dirname_out, fname_out, output_ext] = fileparts(output_path);
 
 % Get basic file info:
 if strcmp(input_ext, '.h5') || strcmp(input_ext, '.hdf5')
@@ -78,10 +77,15 @@ if strcmp(input_ext, '.h5') || strcmp(input_ext, '.hdf5')
     height = info.Datasets(1).Dataspace.Size(1);
     width = info.Datasets(1).Dataspace.Size(2);
     n_frames_total = info.Datasets(1).Dataspace.Size(3); % assuming there's only one dataset; TODO; include code for when there are multiple datasets
+elseif strcmp(input_ext, '.tif')
+    info = imfinfo(input_path);
+    width = info(1).Width;
+    height = info(1).Height;
+    n_frames_total = num1(info);
 end
 
-subset_dims = [height width n_requested_frames];
-disp(subset_dims);
+subset_dims = [height width n_requested_frames]; % define size of extracted image data matrix 
+data = nan(subset_dims); % initialize extracted image data matrix
 
 % Check that the requested number of frames doesn't exceed the length of the movie:
 if end_frame > n_frames_total
@@ -91,14 +95,23 @@ end
 % Read in the appropriate frames:
 if strcmp(input_ext, '.h5') || strcmp(input_ext, '.hdf5')
     data = h5read(input_path, '/mov', [1 1 start_frame], subset_dims);
+elseif strcmp(input_ext, '.tif')
+    tiff_obj = Tiff(input_path);
+    for j = start_frame:end_frame
+        tiff_obj.setDirectory(j);
+        data(:,:,j) = double(tiff_obj.read());
+    end
 end
 
-% Save output frames:
-if strcmp(output_ext, '.h5')
-    h5create(output_path, '/mov', subset_dims);
-    h5write(output_path, '/mov', data, [1 1 1], subset_dims);
-elseif strcmp(output_ext, '.tif')
-    data = int16(data);
-    saveastiff(data, output_path);
-end
 
+%% If requested by user, save output frames:
+if nargin > 3
+    [dirname_out, fname_out, output_ext] = fileparts(output_path);
+    if strcmp(output_ext, '.h5')
+        h5create(output_path, '/mov', subset_dims);
+        h5write(output_path, '/mov', data, [1 1 1], subset_dims);
+    elseif strcmp(output_ext, '.tif')
+        data = int16(data);
+        saveastiff(data, output_path);
+    end
+end
