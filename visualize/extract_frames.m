@@ -81,7 +81,7 @@ elseif strcmp(input_ext, '.tif')
     info = imfinfo(input_path);
     width = info(1).Width;
     height = info(1).Height;
-    n_frames_total = num1(info);
+    n_frames_total = numel(info);
 end
 
 subset_dims = [height width n_requested_frames]; % define size of extracted image data matrix 
