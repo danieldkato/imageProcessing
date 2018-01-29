@@ -139,7 +139,7 @@ rfixed = imref2d(size(avg_first));
 avg_last_reg = imwarp(avg_last, tform, 'OutputView', rfixed);
 
 % Crop any pixels that don't appear in both avg_first and avg_last_reg:
-[avg_first_cropped, avg_last_reg_cropped, rows, cols] = blank_nonovelapping_pixels(avg_first, avg_last_reg, tform);
+[avg_first_cropped, avg_last_reg_cropped] = blank_nonovelapping_pixels(avg_first, avg_last_reg, tform);
 
 
 %% Quantify overlap of mean images:
