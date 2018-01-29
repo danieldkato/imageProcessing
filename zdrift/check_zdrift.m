@@ -57,14 +57,17 @@
 % 1) D - a MATLAB struct with the following fields:
 %   a) r - 2D correlation coefficient between the average of the first
 %   1000 frames and the registered average of the last 1000 frames.
+
 %   b) beginning - m x n matrix containing the mean image of the first 1000
 %   frames of the input movie, where m and n are the movie height and
 %   width, respectively. The gray values have been adjusted to maximize the
 %   dynamic range.
+
 %   c) end - m x n matrix containing the mean image of the last 1000
 %   frames of the input movie, where m and n are the movie height and
 %   width, respectively. The gray values have been adjusted to maximize the
 %   dynamic range.
+
 %   d) diff_map - m x n matrix containing the difference between the mean
 %   image of the first 1000 frames and the mean of the last 1000 frames.
 %   The gray values have been adjusted to maximize the dynamic range.
@@ -126,15 +129,7 @@ toc;
 
 %% Transform average of last 1000 frames to compensate for any XY drift:
 
-% Find best 2D transform between avg_first and avg_last:
-tform = imregcorr(avg_last, avg_first);
-
-% Register avg_last to avg_first:
-rfixed = imref2d(size(avg_first));
-avg_last_reg = imwarp(avg_last, tform, 'OutputView', rfixed);
-
-% Crop any pixels that don't appear in both avg_first and avg_last_reg:
-[avg_first_cropped, avg_last_reg_cropped] = blank_nonovelapping_pixels(avg_first, avg_last_reg, tform);
+[avg_first_cropped, avg_last_reg_cropped] = reg_and_warp(avg_first, avg_last_reg);
 
 
 %% Quantify overlap of mean images:
