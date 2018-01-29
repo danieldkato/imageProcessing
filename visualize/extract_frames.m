@@ -85,7 +85,6 @@ elseif strcmp(input_ext, '.tif')
 end
 
 subset_dims = [height width n_requested_frames]; % define size of extracted image data matrix 
-data = nan(subset_dims); % initialize extracted image data matrix
 
 % Check that the requested number of frames doesn't exceed the length of the movie:
 if end_frame > n_frames_total
@@ -94,12 +93,14 @@ end
 
 % Read in the appropriate frames:
 if strcmp(input_ext, '.h5') || strcmp(input_ext, '.hdf5')
+    data = nan(subset_dims); % initialize extracted image data matrix
     data = h5read(input_path, '/mov', [1 1 start_frame], subset_dims);
 elseif strcmp(input_ext, '.tif')
+    data = int16(zeros(subset_dims));
     tiff_obj = Tiff(input_path);
     for j = start_frame:end_frame
         tiff_obj.setDirectory(j);
-        data(:,:,j) = double(tiff_obj.read());
+        data(:,:,j-start_frame+1) = tiff_obj.read();
     end
 end
 
