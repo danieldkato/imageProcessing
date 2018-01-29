@@ -6,7 +6,7 @@ function data = extract_frames(input_path, start_frame, end_frame, output_path)
 % IV. INPUTS
 % IV. OUTPUTS
 
-% last updated DDK 2018-01-10
+% last updated DDK 2018-01-29
 
 
 %% I. OVERVIEW:
