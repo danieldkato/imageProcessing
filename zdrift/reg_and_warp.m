@@ -1,4 +1,4 @@
-function [fixed, moving] = blank_nonoverlapping_pixels(fixed, moving, tform)
+function [fixed, moving] = reg_and_warp(fixed, moving)
 % DOCUMENTATION TOC:
 % I. OVERVIEW
 % II. REQUIREMENTS
@@ -36,32 +36,27 @@ function [fixed, moving] = blank_nonoverlapping_pixels(fixed, moving, tform)
 % registered to the reference image), where m is the image height and n is
 % the image width
 
-% 3) tform - an affine2D object describing the transformation that
-% optimally registeres the moving image to the fixed image.
-
 
 %% V. OUTPUTS
-% 1) fixed - m x n matrix of the fixed image (i.e., the reference image),
-% where m is the image height and n is the image width
+% 1) fixed - same as input, but all non-overlapping pixels have been
+%    replaced by the mean pixel value of fixed.
 
-% 2) moving - m x n matrix of the moving image (i.e., the movie that is
-% registered to the reference image), where m is the image height and n is
-% the image width
+% 2) moving - same as input, but all non-overlapping pixels have been
+%    replaced by the mean pixel value of moving.
 
 
 %%
 
-% Define reference image:
-height = size(fixed, 1);
-width = size(fixed, 2);
-rfixed = imreg2d(size(fixed));
+% Find best 2D transform between avg_first and avg_last:
+rfixed = imref2d(size(fixed));
+tform = imregcorr(fixed, moving);
+moving = imwarp(moving, tform, 'OutputView', rfixed);
 
-% Define a mask of all 1's:
-mask = ones(height, width); 
-
-% Transform the mask using the same transformation that was used to
-% register moving to fixed. This should reusult in a binary mask of all 0's
-% in the pixels that don't overlap between moving and fixed.
+% Define a mask of all 1's, then transform the mask using the same
+% transformation that was used to register moving to fixed. This should
+% reusult in a binary mask of all 0's in the pixels that don't overlap
+% between moving and fixed.
+mask = ones(size(fixed)); 
 mask_reg = imwarp(mask, tform, 'OutputView', rfixed); 
 
 % Replace non-overlapping pixels of each image with the mean of each
