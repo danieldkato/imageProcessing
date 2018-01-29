@@ -1,4 +1,4 @@
-function [fixed, moving] = reg_and_warp(fixed, moving)
+function [fixed, moving, mask_reg] = reg_and_warp(fixed, moving)
 % DOCUMENTATION TOC:
 % I. OVERVIEW
 % II. REQUIREMENTS
