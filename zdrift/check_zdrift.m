@@ -96,36 +96,31 @@ disp('Getting file info...');
 info = imfinfo(path);
 disp('... done'); toc;
 num_frames = numel(info);
-width = info(1).Width;
-height = info(1).Height;
+
+% Throw error if movie is fewer than 1000 frames long:
+if num_frames < 1000
+    error('Input video is fewer than 1000 frames long; cannot compare first vs last 1000-frame averages.');
+elseif num_frames < 2000
+    warning('Input video is fewer than 2000 frames long; first 1000 frames will overlap with last 1000 frames.');
+end
 
 
 %% Get average images of beginning and end of movie:
 
-image_data = Tiff(path);
-
 % Load first thousand frames and get average:
-tic;
 disp('Computing mean of first 1000 frames...');
-F = zeros(height, width, 1000);
-for i = 201:1200
-    image_data.setDirectory(i)
-    F(:, :, i-200) = double(image_data.read());
-end
+tic;
+F = extract_frames(path, 201, 1200);
 avg_first = mean(F, 3); 
 disp('... done.');
 toc;
 
 % Load last thousand frames and get average:
-tic;
-L = zeros(height, width, 1000);
 disp('Computing mean of last 1000 frames...');
-for j = num_frames-999:num_frames
-    image_data.setDirectory(j)
-    L(:, :, j-(num_frames-1000)) = double(image_data.read());
-end
-disp('... done');
+tic;
+L = extract_frames(path, num_frames-999, num_frames);
 avg_last = mean(L, 3);
+disp('... done');
 toc;
 
 
