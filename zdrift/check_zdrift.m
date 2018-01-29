@@ -22,12 +22,10 @@
 
 
 %% II. REQUIREMENTS
-% 1) The MATLAB function write_metadata.m, available at
-% https://github.com/danieldkato/utilities/blob/master/metadata/MATLAB/write_metadata.m.
-% Note that this function itself has a few dependencies.
-
-% 2) The MATLAB function crop_translated.m, available at
-% https://github.com/danieldkato/imageProcessing/blob/master/check_zdrift/crop_translated.m
+% 1) write_metadata.m, available at https://github.com/danieldkato/utilities/blob/master/metadata/MATLAB/write_metadata.m.
+% 2) get_sha1.m
+% 3) getLastCommit.m
+% 4) reg_and_warp.m
 
 
 %% III. USAGE
@@ -85,8 +83,6 @@
 
 %% TOODO:
 
-% 1) Provide ways of dealing with short (<2000 frames long) movies?
-
 
 %% CD to directory of movie:
 [directory, name, ext] = fileparts(path);
@@ -111,36 +107,45 @@ end
 %% Get average images of beginning and end of movie:
 
 % Load first thousand frames and get average:
-disp('Computing mean of first 1000 frames...');
-tic;
-F = extract_frames(path, 201, 1200);
+disp('Computing mean of first 1000 frames...'); tic;
+%F = extract_frames(path, 201, 1200);
+F = extract_frames(path, 1, 10);
 avg_first = mean(F, 3); 
-disp('... done.');
-toc;
+disp('... done.'); toc;
 
 % Load last thousand frames and get average:
-disp('Computing mean of last 1000 frames...');
-tic;
-L = extract_frames(path, num_frames-999, num_frames);
+disp('Computing mean of last 1000 frames...'); tic;
+%L = extract_frames(path, num_frames-999, num_frames);
+L = extract_frames(path, 1, 10);
 avg_last = mean(L, 3);
-disp('... done');
-toc;
+disp('... done'); toc;
 
 
-%% Transform average of last 1000 frames to compensate for any XY drift:
+%% Do 2D transform of average of last 1000 frames to compensate for any XY drift:
 
-[avg_first_cropped, avg_last_reg_cropped] = reg_and_warp(avg_first, avg_last_reg);
+[avg_first_cropped, avg_last_reg_cropped, mask_reg] = reg_and_warp(avg_first, avg_last); % Do transform
+avg_first_cropped = int16(avg_first_cropped); % necessary to save to TIFF later on
+avg_last_reg_cropped = int16(avg_last_reg_cropped); % necessary to save to TIFF later on
 
 
-%% Quantify overlap of mean images:
+%% Save images:
+
+saveastiff(int16(avg_first_cropped), 'avg_first_cropped.tif');
+
+
+
+%% Quantify similarity of mean images:
+
+% Compute diff map:
+diff_map = avg_last_reg_cropped - avg_first_cropped;
 
 % Find 2D correlation coefficient:
 r = corr2(avg_first_cropped, avg_last_reg_cropped);
-disp(r);
+disp(['r = ' num2str(r)]);
 
 % Sum of squared errors:
 sse = sum(sum((avg_last_reg_cropped - avg_first_cropped).^2));
-disp(sse);
+disp(['sse = ' num2str(sse)]);
 
 
 %% Compute correlaton map:
@@ -164,15 +169,19 @@ corr_map = F_error.*L_error;
 
 %% Visualize images:
 
-% Adjust gray values to maximize dynamic range:
-Fmax = max(max(avg_first_cropped));
-avg_first_gray = avg_first_cropped/Fmax;
-avg_first_adjusted = imadjust(avg_first_gray);
+% Visualize averages and difference map:
+figure();
+subplot(1,3,1);
+imshow(imadjust(avg_first_cropped));
+title('First 1000 frame avg');
+subplot(1,3,2);
+imshow(imadjust(avg_last_reg_cropped));
+title('Last 1000 frame avg');
+subplot(1,3,3);
+imshow(imadjust(diff_map));
+title('Difference map');
 
-Lmax = max(max(avg_last_reg_cropped));
-avg_last_gray = avg_last_reg_cropped/Lmax;
-avg_last_adjusted = imadjust(avg_last_gray);
-
+%{
 % Visualize difference map:
 diff_map = avg_last_adjusted - avg_first_adjusted;
 diff_map = diff_map - min(min(diff_map));
@@ -185,6 +194,7 @@ f2 = figure();
 imshow(avg_last_adjusted);
 f3 = figure();
 imshow(diff_map);
+%}
 
 
 %% Try to register the mean images to the z-stack:
