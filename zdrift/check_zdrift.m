@@ -26,6 +26,7 @@
 % 2) get_sha1.m
 % 3) getLastCommit.m
 % 4) reg_and_warp.m
+% 5) extract_frames.m
 
 
 %% III. USAGE
@@ -128,12 +129,6 @@ avg_first_cropped = int16(avg_first_cropped); % necessary to save to TIFF later 
 avg_last_reg_cropped = int16(avg_last_reg_cropped); % necessary to save to TIFF later on
 
 
-%% Save images:
-
-%saveastiff(int16(avg_first_cropped), 'avg_first_cropped.tif');
-
-
-
 %% Quantify similarity of mean images:
 
 % Compute diff map:
@@ -170,7 +165,7 @@ corr_map = F_error.*L_error;
 %% Visualize images:
 
 % Visualize averages and difference map:
-figure();
+f1 = figure();
 subplot(1,3,1);
 imshow(imadjust(avg_first_cropped));
 title('First 1000 frame avg');
@@ -213,7 +208,7 @@ is_zdir = cellfun(@(c) regexp(c, 'zstack'), names, 'UniformOutput', false);
 zstack_exists = ~isempty(cell2mat(is_zdir));
 
 % If zstack exists, try to register beginning and end average images to plane of z-stack:
-if zstack_exists
+if exist('zstack', 'dir')
     
     % CD to the z-stack directory:
     site_dir = cd('zstack');
@@ -235,17 +230,24 @@ if zstack_exists
     Z_processed = process_zstack(zstack_name);
     num_slices = size(Z_processed, 3);
     
+    % Bank out non-overlapping pixels in Z_processed:
+    for z = 1:num_slices
+        curr_slice = Z_processed(:,:,z);
+        curr_slice(~mask_reg) = mean(mean(curr_slice));
+        Z_processed(:,:,z) = curr_slice;
+    end
+    
     % Correlate the average first image and average last image with each
     % slice and find the most correlated slice for each:
     z_first = reg_slice_2_stack(avg_first_cropped, Z_processed);
     z_last = reg_slice_2_stack(avg_last_reg_cropped, Z_processed);
     
     % Estimate the z-distance between the average first and average last image
-    z_distance = (z_avg_first - z_avg_last_reg) * step_size;
+    z_distance = (z_first - z_last) * step_size;
     
-    D.beginning_slice = z_first;
-    D.end_slice = z_last;
-    D.z_distance = z_distance;
+    z_drift.beginning_slice = z_first;
+    z_drift.end_slice = z_last;
+    z_drift.z_distance = z_distance;
 end
 ('... done.');
 
@@ -269,20 +271,20 @@ old = cd('check_zdrift');
 
 % Create an output structure including the R value, mean beginning image,
 % mean end image, and difference
-D.r = r;
-D.sse = sse;
-D.beginning = avg_first_adjusted;
-D.end = avg_last_adjusted;
-D.diff_map = diff_map;
-save('zdrift.mat', 'D');
+z_drift.r = r;
+z_drift.sse = sse;
+z_drift.beginning = avg_first_cropped;
+z_drift.end = avg_last_reg_cropped;
+z_drift.diff_map = diff_map;
+save('zdrift.mat', 'z_drift');
 
 % Save average images:
 f_name = 'AVG_frames_201-1200_adjusted.tif';
 l_name = ['AVG_frames_' num2str(num_frames - 999) '-' num2str(num_frames) '_adjusted.tif'];
+saveastiff(avg_first_cropped, f_name);
+saveastiff(avg_last_reg_cropped, l_name);
+saveastiff(diff_map, 'diff_map.tif');
 
-imwrite(avg_first_adjusted, f_name);
-imwrite(avg_last_adjusted, l_name);
-imwrite(diff_map, 'dif_map.tif');
 ('... done.');
 
 
@@ -300,7 +302,5 @@ write_metadata(Metadata,'check_zdrift_metadata.json');
 
 %% close figures:
 close(f1);
-close(f2);
-close(f3);
 
 cd('..');
