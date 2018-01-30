@@ -130,7 +130,7 @@ avg_last_reg_cropped = int16(avg_last_reg_cropped); % necessary to save to TIFF 
 
 %% Save images:
 
-saveastiff(int16(avg_first_cropped), 'avg_first_cropped.tif');
+%saveastiff(int16(avg_first_cropped), 'avg_first_cropped.tif');
 
 
 
@@ -237,20 +237,14 @@ if zstack_exists
     
     % Correlate the average first image and average last image with each
     % slice and find the most correlated slice for each:
-    r_avg_first = NaN(num_slices, 1);
-    r_avg_last_reg = NaN(num_slices, 1);
-    for s = 1:size(Z_processed,3)
-        r_avg_first(s) = corr2(avg_first_cropped, Z_processed(rows(1):rows(2), cols(1):cols(2), s));
-        r_avg_last_reg(s) = corr2(avg_last_reg_cropped, Z_processed(rows(1):rows(2), cols(1):cols(2),s));
-    end
-    [M1, z_avg_first] = max(r_avg_first);
-    [M2, z_avg_last_reg] = max(r_avg_last_reg);
+    z_first = reg_slice_2_stack(avg_first_cropped, Z_processed);
+    z_last = reg_slice_2_stack(avg_last_reg_cropped, Z_processed);
     
     % Estimate the z-distance between the average first and average last image
     z_distance = (z_avg_first - z_avg_last_reg) * step_size;
     
-    D.beginning_slice = z_avg_first;
-    D.end_slice = z_avg_last_reg;
+    D.beginning_slice = z_first;
+    D.end_slice = z_last;
     D.z_distance = z_distance;
 end
 ('... done.');
